@@ -87,7 +87,8 @@ library(grid) ## for pheatmap-package
 today <- Sys.Date()
 today
 
-data_year <- 2023 ## set at the beginning
+#data_year <- 2023 ## set at the beginning
+data_year <- 2024 ## set at the beginning
 
 ## create output directory with most recent analysis results
 dir_output_path <- here('output', paste0('BUAdata_',data_year,'_analysisDate_',today) )
@@ -126,11 +127,15 @@ if (data_year == 2023) {
   mydat <- mydat[, -1]
 }
 
-## 2024
-#mydat <- read.table(here("output", "data-proc", #"20250109_2024_BUA_AbundanzenMuecken_Malzfabrik_forRarefaction.csv"), 
-#                    sep = ",", quote = "\"'", dec = ".", header = TRUE)
 
 
+## ------------------------------2024----
+if (data_year == 2024) {
+
+  mydat <- read.table(here("data", "2024_data_mosquitoes_20260109.csv"), 
+                    sep = ",", quote = "\"'", dec = ".", header = TRUE)
+
+}
 
 
 ##### -----------------environmental variables        -----------  #####
@@ -179,32 +184,6 @@ if (data_year == 2024) {
 }
 head(mydat_no19June)
 
-```
-
-### Dealing with unidentified mosquitoes
-
-Choose datasets/ columns later accordingly, we test with and without!
-For now, they are left inside, because total MIR can be calculated based on that
-
-```{r}
-## TODO - I don't do anything with it - delete?
-if (data_year == 2023) {
-  ## create dataset without unidentified
-  mycol_AB  <- which(colnames(mydat_no19June) == 'AB_unidentified')
-  mycol_WNV <- which(colnames(mydat_no19June) == 'WNV_unidentified')
-  mydat_no19June_no_unidentif <- mydat[,-c(mycol_AB, mycol_WNV)] 
-}
-
-
-if (data_year == 2024) {
-  ## create dataset without unidentified
-  mycol_AB  <- which(colnames(mydat_no19June) == 'AB_unidentified')
-  mycol_WNV <- which(colnames(mydat_no19June) == 'WNV_unidentified')
-  mydat_no19June_no_unidentif <- mydat[,-c(mycol_AB, mycol_WNV)] 
-}
-
-
-head(mydat_no19June_no_unidentif)
 ```
 
 ## Combine species groups
@@ -299,8 +278,7 @@ if (data_year == 2024) {
 
   mydat_no19June_comb2 <- mydat_no19June_comb[,-mycol2] 
   names(mydat_no19June_comb2)
-  ## TODO check!
-  mydat_no19June_comb_final <- mydat_no19June_comb2[,c(1:3,4:24,30:31,25,32,26:29)] ##sort unidentified at end
+  mydat_no19June_comb_final <- mydat_no19June_comb2[,c(1:23,26:27,24,28)] ##sort unidentified at end
   names(mydat_no19June_comb_final)
 
 }
@@ -354,50 +332,48 @@ suffix_for_plot
 #head(mydat_to_run)
 
 ## now continue to work with mydat_to_run
-}
+} ##end 2023
 ```
 
 
 RUN for 2024
- TODO
 
 ```{r}
+
+suffix_for_plot <- NA
 if (data_year == 2024){
 
-FLAG_dataset <- 1 # 0 for rarefaction AB mosquitos , 1 for combined datasets
+FLAG_dataset <- 0 # 0 for rarefaction AB mosquitos , 1 for combined datasets
 
 ## uncombined, original dataset - not combined - with 17th of June and no/with unidentified
 if (FLAG_dataset == 0) {
   mydat_to_run <- mydat_no19June
-  colstart <- 12
-  colend   <- 31 ## take 32 when unidentified are included in mosqu div analysis, else 31
+  colstart <- 11
+  colend   <- 30 ## take 31 when unidentified are included in mosqu div analysis, else 31
 
-  colstart_wnv <- 33 
-  colend_wnv   <- 33 ## no unidentified WNV
+  colstart_wnv <- 32 
+  colend_wnv   <- 32 ## no unidentified WNV
+  suffix_for_plot <- '_uncomb_unident_no_'
 }
 
 ## combined dataset with 17th of June and no/with unidentified
 if (FLAG_dataset == 1) {
   mydat_to_run <- mydat_no19June_comb_final
-  colstart <- 12
-  colend   <- 26 ## take 27 when unidentified are included in mosqu div analysis
+  colstart <- 11
+  colend   <- 25 ## take 26 when unidentified are included in mosqu div analysis
 
-  colstart_wnv <- 28 
-  colend_wnv   <- 28 
-}
+  colstart_wnv <- 27 
+  colend_wnv   <- 27 
+  suffix_for_plot <- '_comb_unident_no_'
+ }
 
-suffix_for_plot <- NA
-suffix_for_plot <- if(FLAG_dataset == 0 & colend == 31 & colend_wnv == 33) {'_uncomb_unident_no_'} else
-                   if(FLAG_dataset == 0 & colend == 31 & colend_wnv == 33) {'_uncomb_unident_yes_'} else
-                   if(FLAG_dataset == 1 & colend == 26 & colend_wnv == 28) {'_comb_unident_no_'} else
-                   if(FLAG_dataset == 1 & colend == 27 & colend_wnv == 28) {'_comb_unident_yes_'}
 suffix_for_plot
 
 head(mydat_to_run)
 
 ## now continue to work with mydat_to_run
 
-}
+} ## end 2024
 
 
 ## TODO put into a loop? create separate dfs and then run the following in a clean loop?
@@ -860,6 +836,9 @@ master_env_tmp <- rbind(myenv[2,],
                          myenv[5,])
 master_env <- master_env_tmp
 
+
+##TODO aggregate temperature and humidity
+
 ```
 
 
@@ -1057,7 +1036,6 @@ pdf(file = paste0(dir_plot_path,"/Fig_S2_pca_envcom_cos2_",data_year,suffix_for_
                   width = 12, height = 8)
   fviz_cos2(data.pca, choice = "var", axes = 1:2)
 dev.off()
-
 
 ```
 
