@@ -187,6 +187,7 @@ Choose datasets/ columns later accordingly, we test with and without!
 For now, they are left inside, because total MIR can be calculated based on that
 
 ```{r}
+## TODO - I don't do anything with it - delete?
 if (data_year == 2023) {
   ## create dataset without unidentified
   mycol_AB  <- which(colnames(mydat_no19June) == 'AB_unidentified')
@@ -487,10 +488,6 @@ AB_wnv_site
 
 
 ```{r, eval=FALSE}
-## https://cran.r-project.org/web/packages/iNEXT/vignettes/Introduction.pdf
-## https://www.davidzeleny.net/anadat-r/doku.php/en:div-ind
-## https://github.com/Lagkouvardos/Rhea/blob/master/3.Beta-Diversity/Beta-Diversity.R
-
 ## for infected 
 if (data_year == 2023) {
 wnv_div0 <- iNEXT(AB_wnv_site, q=0, datatype="abundance") 
@@ -503,7 +500,7 @@ wnv_r <- ggiNEXT(wnv_div0, type=1, se=TRUE, facet.var="None",
 
 plot(wnv_r)
 
-pdf(paste0(dir_plot_path,"/Fig_rarefaction_wnv_q0_",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_wnv_q0_",data_year,suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   grid.arrange(wnv_r, ncol=1)
 dev.off()
@@ -518,7 +515,7 @@ Depending on which data-set was chosen (combining or not the species into groups
 
 ```{r}
 ## for mosquitos
-mosq_div0 <- iNEXT(AB_mosq_site, q=0, datatype="abundance") #, size=5000)
+mosq_div0 <- iNEXT(AB_mosq_site, q=0, datatype="abundance") 
 mosq_div0$AsyEst ## save this output
 write.csv(x = mosq_div0$AsyEst, 
    file = paste0(dir_output_path,"/Rarefaction_mosq",
@@ -535,7 +532,7 @@ g0 <- ggiNEXT(mosq_div0, type=1, se=TRUE, facet.var="None",
        xlab('Number of mosquitoes')
 g0
 
-pdf(paste0(dir_plot_path,"/Fig_S1_rarefaction_mosq_q0",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_S1_rarefaction_mosq_q0_",data_year,suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   grid.arrange(g0, ncol=1)
 dev.off()
@@ -561,7 +558,7 @@ g1 <- ggiNEXT(mosq_div1, type=1, se=TRUE, facet.var="None",  color.var="Assembla
 
 g1
 
-pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q1_",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q1_",data_year,suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   grid.arrange(g1, ncol=1)
 dev.off()
@@ -583,7 +580,7 @@ g2 <- ggiNEXT(mosq_div2, type=1, se=TRUE, facet.var="None", color.var="Assemblag
        xlab('Number of mosquitoes')
 g2
 
-pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q2_",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q2_",data_year,suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   grid.arrange(g2, ncol=1)
 dev.off()
@@ -757,7 +754,7 @@ p_heat_wnv_rel <- pheatmap(mat = my_c,
                            fontsize=16) 
 p_heat_wnv_rel
 
-pdf(paste0(dir_plot_path,"/Fig_5B_heat_wnv_mir",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_5B_heat_wnv_mir_",data_year,suffix_for_plot,today,".pdf"), 
       width = 12, height = 10) 
   p_heat_wnv_rel
 dev.off()
@@ -776,7 +773,7 @@ p_heat <- pheatmap(log2(my_a+1), color = inferno(20),fontsize = 16) # logarithm!
 p_heat
 
 
-pdf(paste0(dir_plot_path,"/Fig_5A_heat_mosqAB_log",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_5A_heat_mosqAB_log_",data_year,suffix_for_plot,today,".pdf"), 
       width = 12, height = 10) 
   p_heat
 dev.off()
@@ -793,7 +790,7 @@ my_b
 p_heat_wnv <- pheatmap(my_b, color = inferno(20), fontsize= 16) ##
 p_heat_wnv
 
-pdf(paste0(dir_plot_path,"/Fig_heat_wnvAB",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_heat_wnvAB_",data_year,suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   p_heat_wnv
 dev.off()
@@ -901,7 +898,7 @@ num_df <- env[sapply(env, is.numeric)]
 cor_mat <- cor(num_df, method = "kendall", use = "pairwise.complete.obs")
 
 
-pdf(file = paste0(dir_plot_path,"/corr_envs_kendall",suffix_for_plot,today,".pdf"),
+pdf(file = paste0(dir_plot_path,"/corr_envs_kendall_",data_year,suffix_for_plot,today,".pdf"),
                   width = 10, height = 10)
 
   ggcorrplot(cor_mat,
@@ -917,9 +914,6 @@ pdf(file = paste0(dir_plot_path,"/corr_envs_kendall",suffix_for_plot,today,".pdf
 ### PCA
 
 ```{r}
-## https://www.datacamp.com/tutorial/pca-analysis-r
-## http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
-
 #install.packages("FactoMineR")
 library("FactoMineR")
 #install.packages("corrr")
@@ -1041,7 +1035,7 @@ com$Site       ## "RB" "RA" "S"  "C"  "N"
 
 
 ## save
-pdf(file = paste0(dir_plot_path,"/Fig7_pca_envcom_wSites",suffix_for_plot,today,".pdf"),
+pdf(file = paste0(dir_plot_path,"/Fig7_pca_envcom_wSites_",data_year,suffix_for_plot,today,".pdf"),
                   width = 12, height = 8)
   p
 dev.off()
@@ -1059,7 +1053,7 @@ dev.off()
 fviz_cos2(data.pca, choice = "var", axes = 1:2)
 
 ## save plots
-pdf(file = paste0(dir_plot_path,"/Fig_S2_pca_envcom_cos2",suffix_for_plot,today,".pdf"),
+pdf(file = paste0(dir_plot_path,"/Fig_S2_pca_envcom_cos2_",data_year,suffix_for_plot,today,".pdf"),
                   width = 12, height = 8)
   fviz_cos2(data.pca, choice = "var", axes = 1:2)
 dev.off()
