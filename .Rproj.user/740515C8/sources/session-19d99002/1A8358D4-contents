@@ -87,7 +87,8 @@ library(grid) ## for pheatmap-package
 today <- Sys.Date()
 today
 
-data_year <- 2023 ## set at the beginning
+#data_year <- 2023 ## set at the beginning
+data_year <- 2024 ## set at the beginning
 
 ## create output directory with most recent analysis results
 dir_output_path <- here('output', paste0('BUAdata_',data_year,'_analysisDate_',today) )
@@ -1057,7 +1058,6 @@ pdf(file = paste0(dir_plot_path,"/Fig_S2_pca_envcom_cos2_",data_year,suffix_for_
                   width = 12, height = 8)
   fviz_cos2(data.pca, choice = "var", axes = 1:2)
 dev.off()
-
 
 ```
 
