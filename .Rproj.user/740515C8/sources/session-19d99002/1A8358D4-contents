@@ -81,31 +81,60 @@ library(ggrepel)
 ## Set themes
 
 ```{r}
-theme_set(d6::theme_d6())
 
 today <- Sys.Date()
 today
 
 data_year <- 2023 ## set at the beginning
 
-## create current output directory
+## create output directory with most recent analysis results
 dirfilepath <- here('output', paste0('BUAdata_',data_year,'_analysisDate_',today) )
-ifelse(!dir.exists(file.path(dirfilepath)), dir.create(file.path(dirfilepath)), FALSE)
+ifelse(!dir.exists(file.path(dirfilepath)), 
+       dir.create(file.path(dirfilepath)), FALSE)
 
 
+theme_set(d6::theme_d6(base_size = 18))
+
+site.cols  <- c("#CDCD00", "#6CA6CD","#00EE76","#FF7F50","#006400")
+site.names <- c("S",       "RB",      "C",     "RA",     "N")
 
 ```
 
 
 # START HERE
 
-## Load cleaned data
+## Load data
 
 ```{r}
-mydat <- read.table(here("data", "2023_data_mosquitoes_20240313.csv"), 
+##### -----------------mosquito abundances and WNV infections -----------  #####
+if (data_year == 2023) {
+
+  mydat <- read.table(here("data", "2023_data_mosquitoes_20240313.csv"), 
                     sep = ",", quote = "\"'", dec = ".", header = TRUE)
-head(mydat)
-str(mydat)
+  head(mydat)
+  str(mydat)
+  ## TODO ugly that first column = the rownames - how to suppress that?
+  mydat <- mydat[, -1]
+}
+
+## 2024
+#mydat <- read.table(here("output", "data-proc", #"20250109_2024_BUA_AbundanzenMuecken_Malzfabrik_forRarefaction.csv"), 
+#                    sep = ",", quote = "\"'", dec = ".", header = TRUE)
+
+
+
+
+##### -----------------environmental variables        -----------  #####
+
+myenv <- read.table(here("data", "env_covariates_per_site.csv"), 
+                    sep = ",", quote = "\"'", dec = ".", header = TRUE)
+head(myenv)
+## TODO ugly that first column = the rownames - how to suppress that?
+myenv <- myenv[, -1]
+
+##### -----------------modelled bird abundances      -----------  #####
+## Planillo et al. 2021 Div Dist
+
 
 
 
@@ -113,19 +142,31 @@ str(mydat)
 
 ## Prepare data set for rarefaction
 
-### Sum abundances
+### Delete missing day in 2023
 
-Take out the date "19.06." from all sites because it is missing in one site to keep sampling effort constant.
+If data_year == 2023 then
+take out the date "19.06." from all sites because it is missing in one site 
+to keep sampling effort constant.
+
+Take all data for 2024
 
 ```{r}
-myrow <- which(mydat$Date == '2023-06-19')
-myrow
-mydat_no19June <- mydat[-myrow,]
-str(mydat_no19June) 
-#View(mydat_no19June)
 
-## summarize per sampling site ##
-unique(mydat_no19June$Sampling_site)
+if (data_year == 2023) {
+  myrow <- which(mydat$Date == '2023-06-19')
+  myrow
+  mydat_no19June <- mydat[-myrow,]
+  str(mydat_no19June) 
+  #View(mydat_no19June)
+
+  ## check per sampling site ##
+  unique(mydat_no19June$Sampling_site)
+}
+
+if (data_year == 2024) {
+  mydat_no19June <- mydat ## trick to continue with same dataset name 
+}
+
 ```
 
 ### Dealing with unidentified mosquitoes
@@ -134,10 +175,23 @@ Choose datasets/ columns later accordingly, we test with and without!
 For now, they are left inside
 
 ```{r}
-## create dataset without unidentified
-mycol_AB  <- which(colnames(mydat_no19June) == 'AB_unidentified')
-mycol_WNV <- which(colnames(mydat_no19June) == 'WNV_unidentified')
-mydat_no19June_no_unidentif <- mydat[,-c(mycol_AB, mycol_WNV)] 
+if (data_year == 2023) {
+  ## create dataset without unidentified
+  mycol_AB  <- which(colnames(mydat_no19June) == 'AB_unidentified')
+  mycol_WNV <- which(colnames(mydat_no19June) == 'WNV_unidentified')
+  mydat_no19June_no_unidentif <- mydat[,-c(mycol_AB, mycol_WNV)] 
+}
+
+
+if (data_year == 2024) {
+  ## create dataset without unidentified
+  mycol_AB  <- which(colnames(mydat_no19June) == 'AB_unidentified')
+  mycol_WNV <- which(colnames(mydat_no19June) == 'WNV_unidentified')
+  mydat_no19June_no_unidentif <- mydat[,-c(mycol_AB, mycol_WNV)] 
+}
+
+
+
 ```
 
 
