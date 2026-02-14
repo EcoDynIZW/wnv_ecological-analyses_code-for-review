@@ -414,7 +414,7 @@ if (data_year == 2024){
 sum_rb_wnv <- as.numeric(sum(RB[, colstart_wnv], na.rm=T))
 sum_ra_wnv <- as.numeric(sum(RA[, colstart_wnv], na.rm=T))
 sum_s_wnv <- as.numeric(sum(S[, colstart_wnv], na.rm=T))
-sum_fried_wnv <- as.numeric(sum(C[, colstart_wnv], na.rm=T))
+sum_c_wnv <- as.numeric(sum(C[, colstart_wnv], na.rm=T))
 sum_n_wnv <- as.numeric(sum(N[, colstart_wnv], na.rm=T))
 }
 
@@ -594,12 +594,20 @@ save_as_docx(ft, path =  paste0(dir_output_path,
 
 
 ## similarity EXCLUDING unidentified mosquitoes/ combined dataset (almost same as uncombined)
-
+## 2023
 ##       rotha linde malzf fried
 ## linde  0.40                  
 ## malzf  0.44  0.93            
 ## fried  0.31  0.82  0.77      
 ## sued   0.26  0.72  0.67  0.87
+
+## 2024
+#      RB   RA    S    C
+# RA 0.43               
+# S  0.63 0.74          
+# C  0.49 0.77 0.81     
+# N  0.38 0.86 0.62 0.73
+
 ```
 
 ### BC for WNV
@@ -628,9 +636,14 @@ tmp2 <- as.data.frame(tmp1,row.names=rownames(tmp1))
 tmp2$X <-rownames(tmp1) 
 #tmp2
 
-ft <- flextable(tmp2)
-save_as_docx(ft, path =  paste0(dir_output_path,
+
+
+  ##only save for 2023
+  if(data_year == 2023){
+    ft <- flextable(tmp2)
+    save_as_docx(ft, path =  paste0(dir_output_path,
                     "/ft_wnv_abs_BrayCurtis_similarity",suffix_for_plot,today,".docx"))
+  }
 
 #}
 ## similarity INCLUDING unidentified mosquitoes /comb dataset - similar to uncombined
@@ -701,6 +714,44 @@ save_as_docx(ft, path =  paste0(dir_output_path,
 ```
 
 
+```{r}
+if (data_year == 2024) {
+  wnv_inf_spec <- names(AB_wnv_beta) ## TODO grep WNV with AB
+  ab_inf_spec <- c("AB_Culex_pipiens_spp")
+ ## TODO again coded with hard wired numbers
+  ab_rb <- RB[, c(ab_inf_spec[1])]
+  ab_ra <- RA[, c(ab_inf_spec[1])]
+  ab_s <- S[, c(ab_inf_spec[1])]
+  ab_c <- C[, c(ab_inf_spec[1])]
+  ab_n <- N[, c(ab_inf_spec[1])]
+  
+  totsum_rb <- sum(ab_rb)
+  totsum_ra <- sum(ab_ra)
+  totsum_s <- sum(ab_s)
+  totsum_c <- sum(ab_c)
+  totsum_n <- sum(ab_n)
+  
+AB_mosq_infected <- rbind(totsum_rb,totsum_ra,totsum_s,totsum_c,totsum_n) 
+rownames(AB_mosq_infected) <- c("RB","RA", "S","C","N")
+colnames(AB_mosq_infected) <- "AB_Culex_pipiens_spp"
+
+AB_wnv_beta_rel <- AB_wnv_beta ## make copy
+
+AB_wnv_beta_rel[1,] <- round(AB_wnv_beta[1,] / totsum_rb * 1000, digits = 2)
+AB_wnv_beta_rel[2,] <- round(AB_wnv_beta[2,] / totsum_ra * 1000, digits = 2)
+AB_wnv_beta_rel[3,] <- round(AB_wnv_beta[3,] / totsum_s * 1000, digits = 2)
+AB_wnv_beta_rel[4,] <- round(AB_wnv_beta[4,] / totsum_c * 1000, digits = 2)
+AB_wnv_beta_rel[5,] <- round(AB_wnv_beta[5,] / totsum_n * 1000, digits = 2)
+
+AB_wnv_beta_rel
+  
+  
+}
+
+```
+
+
+
 
 ## Hierarchical cluster analysis
 
@@ -708,10 +759,10 @@ Check association of mosquitoes to make subgroups for alluvial plot/ NMDS. For t
 
 ### Fig 5B Relative infection prob per relative mosq abundance
 
-https://davetang.org/muse/2018/05/15/making-a-heatmap-in-r-with-the-pheatmap-package/
-
-
+makes no sense for 2024
 ```{r}
+
+if (data_year == 2023) {
 ## colour breaks / quantiles
 my_c <- data.matrix(AB_wnv_beta_rel)
 my_c 
@@ -734,6 +785,8 @@ pdf(paste0(dir_plot_path,"/Fig_5B_heat_wnv_mir_",data_year,suffix_for_plot,today
       width = 12, height = 10) 
   p_heat_wnv_rel
 dev.off()
+
+}
 
 ```
 
@@ -758,8 +811,11 @@ dev.off()
 
 ### Absolute values wnv
 
+makes no sense for 2024
 ```{r}
 ## wnv
+
+if (data_year == 2023) {
 my_b <- data.matrix(AB_wnv_beta)
 my_b 
 
@@ -770,6 +826,8 @@ pdf(paste0(dir_plot_path,"/Fig_heat_wnvAB_",data_year,suffix_for_plot,today,".pd
       width = 10, height = 10) 
   p_heat_wnv
 dev.off()
+
+}
 
 ```
 
@@ -814,6 +872,7 @@ save_as_docx(ft, path =  paste0(dir_output_path,
 Abundance infected mosquitoes and MIR
 ```{r}
 
+if (data_year == 2023) {
 master_mosq_tmp <- AB_mosq_infected ## only choose the ones with infections
 ## add total abundance and total measured 
 ab_mosq_per_site <- cbind(rowSums(AB_mosq_beta) )
@@ -823,6 +882,16 @@ master_mosq <- cbind(master_mosq_tmp,ab_mosq_per_site)
 
 master_wnv  <- AB_wnv_beta_rel
 master_wnv$MIR_per_site <- c(MIR_rb,MIR_ra,MIR_s,MIR_c,MIR_n)
+}
+
+
+if (data_year == 2024) {
+master_mosq <- AB_mosq_infected
+master_wnv  <- cbind(AB_wnv_beta,AB_wnv_beta_rel)
+colnames(master_wnv) <- ("WNV_Culex_pipiens_spp","MIR")
+
+}
+
 
 ```
 
