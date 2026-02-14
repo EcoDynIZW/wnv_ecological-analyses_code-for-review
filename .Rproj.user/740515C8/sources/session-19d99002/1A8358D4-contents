@@ -93,6 +93,7 @@ dirfilepath <- here('output', paste0('BUAdata_',data_year,'_analysisDate_',today
 ifelse(!dir.exists(file.path(dirfilepath)), dir.create(file.path(dirfilepath)), FALSE)
 
 
+
 ```
 
 
@@ -101,7 +102,7 @@ ifelse(!dir.exists(file.path(dirfilepath)), dir.create(file.path(dirfilepath)), 
 ## Load cleaned data
 
 ```{r}
-mydat <- read.table(here("data", "data_mosquitoes_20240313.csv"), 
+mydat <- read.table(here("data", "2023_data_mosquitoes_20240313.csv"), 
                     sep = ",", quote = "\"'", dec = ".", header = TRUE)
 head(mydat)
 str(mydat)
