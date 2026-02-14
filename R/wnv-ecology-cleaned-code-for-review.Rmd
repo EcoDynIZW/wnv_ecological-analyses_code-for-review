@@ -535,7 +535,7 @@ g0 <- ggiNEXT(mosq_div0, type=1, se=TRUE, facet.var="None",
        xlab('Number of mosquitoes')
 g0
 
-pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q0",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_S1_rarefaction_mosq_q0",suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   grid.arrange(g0, ncol=1)
 dev.off()
@@ -757,7 +757,7 @@ p_heat_wnv_rel <- pheatmap(mat = my_c,
                            fontsize=16) 
 p_heat_wnv_rel
 
-pdf(paste0(dir_plot_path,"/Fig_heat_wnv_mir",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_5B_heat_wnv_mir",suffix_for_plot,today,".pdf"), 
       width = 12, height = 10) 
   p_heat_wnv_rel
 dev.off()
@@ -776,7 +776,7 @@ p_heat <- pheatmap(log2(my_a+1), color = inferno(20),fontsize = 16) # logarithm!
 p_heat
 
 
-pdf(paste0(dir_plot_path,"/Fig_heat_mosqAB_log",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_5A_heat_mosqAB_log",suffix_for_plot,today,".pdf"), 
       width = 12, height = 10) 
   p_heat
 dev.off()
@@ -895,26 +895,6 @@ save_as_docx(ft, path =
 ### Corr plot env pred
 
 ```{r}
-## from Ralph Schäfer's script
-## We define a function to change the colour of points and lines (otherwise both are black)
-lowerFn <- function(data, mapping, method = "lm", ...) {
-  p <- ggplot(data = data, mapping = mapping) +
-              geom_point(colour = "blue") +
-              geom_smooth(method = method, color = "red", ...)
-  p
-}
-
-pdf(file = paste0(here('plots'),"/corr_envs_baseR",suffix_for_plot,today,".pdf"),
-                  width = 30, height = 23)
-
-  ggpairs(env, lower = list(continuous = wrap(lowerFn, method = "lm")),
-                    diag = list(continuous = wrap("densityDiag", colour = "blue")),
-                    upper = list(continuous = wrap("cor", size = 5)))
-dev.off()
-```
-
-
-```{r}
 library(ggcorrplot)
 
 num_df <- env[sapply(env, is.numeric)]
@@ -922,7 +902,7 @@ cor_mat <- cor(num_df, method = "kendall", use = "pairwise.complete.obs")
 
 
 pdf(file = paste0(dir_plot_path,"/corr_envs_kendall",suffix_for_plot,today,".pdf"),
-                  width = 30, height = 30)
+                  width = 10, height = 10)
 
   ggcorrplot(cor_mat,
            hc.order = TRUE,         # cluster similar variables
@@ -949,45 +929,22 @@ library(ggcorrplot)
 #install.packages("factoextra")
 library("factoextra")
 
-env
+
 com
 ## in case there are factors/characters in the data
-#subset_for_analysis <- cbind(env[, -5],com) #take out LU
-#subset_for_analysis <- cbind(env[, - c(2,8)],com) #take out LU +sampling site - position depends on env
-which(names(env) == 'LU')
+#which(names(com) == 'Site')
 
-
-subset_for_analysis <- cbind(env,com)
-#subset_for_analysis <- cbind(env)
-#subset_for_analysis <- cbind(env,com,master_env) ## take out
-#is.numeric(subset_for_analysis) ## crosscheck
-
-## new data Corinna Patzina 2025 10 13 as alternative to old subset_for_analysis
-
-tmp_20251013 <- read.table(here('data','BE23_BUA_correlations_exp_clean.csv'), sep = ",", quote = "\"'", dec = ".", header = TRUE) ##strange special characters invisible after some column names...
-tmp_20251013
-## site 1 = RB, 2 = RA, 3=S, 4 = C, 5=N analogue to subset_for_analysis file
-subset_for_analysis <- tmp_20251013[, -1] ## take out site and overwrite code
-
-#### 
-
+subset_for_analysis <- com[,-1]
 data_normalized <- scale(subset_for_analysis) ## with bird_ab bird_div...explains less!
 
 head(data_normalized)
-corr_matrix <- cor(data_normalized)
+#corr_matrix <- cor(data_normalized)
 
+a <- which(is.na(data_normalized)) ##i fsame amount of birds present, variance is 0
+col_pos <- which(colnames(data_normalized) == "Phoenicurus_phoenicurus")
+data_normalized_b <- data_normalized[,-col_pos]
+data_normalized <- data_normalized_b
 
-## Achtung die Nummerierung der locations geht manchmal
-## durcheinander mit den rownames, also 2 = rotha, 4=linde, 1=malz, 3=fried, 5=sued:
-cbind(master_env$locationNo,master_env$Sampling_site)
-
-## CHOOSE
-#data.pca <- princomp(corr_matrix) #based on correlation matrix
-#summary(data.pca)
-# Why prcomp() is Better Than princomp()
-# 
-#     prcomp(): Preferred because it uses Singular Value Decomposition (SVD), which is numerically more stable.
-#     princomp(): Works with the covariance matrix and may have issues with singular matrices.
 
 ## use this:
 ## based on scaled data, but not cor
@@ -997,35 +954,26 @@ summary(data.pca)
 
 ## continue here
 data.pca$rotation  # Shows loadings
-data.pca$loadings[, 1:2]
-# Loadings of variables on each principal component
-loadings <- data.pca$rotation
-print(loadings)
+## Loadings of variables on each principal component
+#loadings <- data.pca$rotation
+#print(loadings)
 
-# Example: Get the loadings for PC1
+## Get the loadings for PC1
 loadings_PC1 <- loadings[, 1]
 print(loadings_PC1)
 # Scores of data points in the new PCA space
 scores <- data.pca$x
 print(head(scores))
 
-# Example: Get scores for the first two principal components
+## Get scores for the first two principal components
 scores_PC1_PC2 <- scores[, 1:2]
 print(scores_PC1_PC2)
-
 
 # Compute eigenvalues
 eigenvalues <- (data.pca$sdev)^2
 eigenvalues
 
 ## -----scree plot-----
-# Create a scree plot
-plot(eigenvalues, type = "b", 
-     xlab = "Principal Component", 
-     ylab = "Eigenvalue", 
-     main = "Scree Plot")
-abline(h = 1, col = "red", lty = 2)  # Add a horizontal line at y = 1
-
 # Data for scree plot
 scree_data <- data.frame(
   Component = 1:length(eigenvalues),
@@ -1036,9 +984,11 @@ ggplot(scree_data, aes(x = Component, y = Eigenvalue)) +
   geom_point(size = 3, color = "blue") +
   geom_line(color = "blue") +
   geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
-  labs(title = "Scree Plot", x = "Principal Component", y = "Eigenvalue") #+
- # theme_minimal()
+  labs(title = "Scree Plot", x = "Principal Component", 
+       y = "Eigenvalue") 
 
+## scree plot - similarly nice
+#fviz_eig(data.pca, addlabels = TRUE)
 
 # Retain components with eigenvalues > 1
 components_to_retain <- sum(eigenvalues > 1)
@@ -1050,7 +1000,7 @@ pc_scores <- data.pca$x
 pc_reduced <- pc_scores[, 1:components_to_retain]
 data.pca$rotation  # Loadings
 
-variance_explained <- eigenvalues / sum(eigenvalues) * 100
+variance_explained <- round(eigenvalues / sum(eigenvalues) * 100, digits= 2)
 cumulative_variance <- cumsum(variance_explained)
 
 # Combine into a data frame for interpretation
@@ -1067,54 +1017,53 @@ print(results)
 ### PCA plot
 #### Fig 7 
 ```{r}
-biplot(data.pca, scale = 0, cex = 0.7, col = c("blue", "red"))
-
-
 ## Biplot using factoextra
 ## ind is related to the rows, 
-## and the numbering is according to rownames, 2= rotha... (see above)
+## and the numbering is according to rownames, 2= rotha... (see below)
+rownames(com)  ## "2"   "4" "1"  "3"  "5"
+com$Site       ## "RB" "RA" "S"  "C"  "N" 
 
-fviz_pca_biplot(data.pca, 
-                repel = TRUE,  # Avoid overlapping text
-                col.var = "cos2",
-                   gradient.cols = c("grey", "blue", "red"),  ## arrows
-                col.ind = "orange", #"as.numeric(as.factor(master_env$Sampling_site))
-             #   gradient.cols = c("#330066", "#0072B2","#CC79A7","#009E73","#D55E00"),
-                pointshape = 19, pointsize = 7, alpha.ind=0.8
-            #    label = c("ind", "var"),
-             #   select.ind = list(cos2 = 40)
-           #    palette = c("#330066", "#0072B2","#CC79A7","#009E73","#D55E00"), 
-             #  addEllipses = TRUE, ## Add confidence ellipses
-             #  title = "PCA Biplot"
-                )
+  p <- fviz_pca_biplot(data.pca, 
+                repel = TRUE,  
+                col.var = "cos2", gradient.cols = c("grey", "blue", "red"),  ## arrows
+                col.ind = "orange" , ## com$Site, ##
+                pointshape = 19, pointsize = 7, alpha.ind=0.8,
+               # addEllipses = TRUE, label = "var", mean.point = FALSE,
+               # ellipse.type = 'confidence', ellipse.level=0.7,
+                legend.title = "cos2" ) 
+  
+  
+  p$layers[[1]]$data$name <- factor(com$Site)
+  p$layers[[1]]$mapping <- aes(x, y, colour = Col., shape = name) ##TODO why doesn't it take the names???
+  p$layers[[1]]$aes_params$size <- 5
+  p <- p + labs(shape = 'Site')
+  p
+
+
+## save
+pdf(file = paste0(dir_plot_path,"/Fig7_pca_envcom_wSites",suffix_for_plot,today,".pdf"),
+                  width = 12, height = 8)
+  p
+dev.off()
+
+## TODO how can I add my colour to the sites?
+  #  scale_fill_manual(values = site.col)
+# scale_colour_manual(values = site.col)
+
 ```
 
 
 #### Fig S2
 
 ```{r}
-## scree plot
-fviz_eig(data.pca, addlabels = TRUE)
-#fviz_pca_var(data.pca, col.var = "black")
-#fviz(data.pca, "ind") # Individuals plot
-#fviz(data.pca, "var") # Variables plot
 fviz_cos2(data.pca, choice = "var", axes = 1:2)
-fviz_pca_var(data.pca, col.var = "cos2",
-            gradient.cols = c("grey", "blue", "red"),
-            repel = TRUE)
 
 ## save plots
-pdf(file = paste0(here('plots'),"/pca_envcom_cos2",suffix_for_plot,today,".pdf"),
+pdf(file = paste0(dir_plot_path,"/Fig_S2_pca_envcom_cos2",suffix_for_plot,today,".pdf"),
                   width = 12, height = 8)
   fviz_cos2(data.pca, choice = "var", axes = 1:2)
 dev.off()
 
-pdf(file = paste0(here('plots'),"/pca_envcom",suffix_for_plot,today,".pdf"),
-                  width = 12, height = 8)
-  fviz_pca_var(data.pca, col.var = "cos2",
-            gradient.cols = c("grey", "blue", "red"),
-            repel = TRUE)
-dev.off()
 
 ```
 
