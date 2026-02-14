@@ -152,7 +152,7 @@ ab_aves <- read.table(here("data", "bird_abundance_per_site_modelled.csv"),
                     sep = ",", quote = "\"'", dec = ".", header = TRUE)
 
 
-
+## TODO - retreieve temp+hum values now
 
 ```
 
@@ -888,8 +888,7 @@ master_wnv$MIR_per_site <- c(MIR_rb,MIR_ra,MIR_s,MIR_c,MIR_n)
 if (data_year == 2024) {
 master_mosq <- AB_mosq_infected
 master_wnv  <- cbind(AB_wnv_beta,AB_wnv_beta_rel)
-colnames(master_wnv) <- ("WNV_Culex_pipiens_spp","MIR")
-
+colnames(master_wnv) <- c("WNV_Culex_pipiens_spp","MIR")
 }
 
 
@@ -1001,8 +1000,8 @@ data.pca$rotation  # Shows loadings
 #print(loadings)
 
 ## Get the loadings for PC1
-loadings_PC1 <- loadings[, 1]
-print(loadings_PC1)
+#loadings_PC1 <- loadings[, 1]
+#print(loadings_PC1)
 # Scores of data points in the new PCA space
 scores <- data.pca$x
 print(head(scores))
