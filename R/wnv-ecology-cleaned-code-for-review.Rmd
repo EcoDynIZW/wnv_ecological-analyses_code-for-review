@@ -452,7 +452,8 @@ MIR_s <- round(sum(sum_s_wnv) / sum(sum_s) * 1000 , digits=4); MIR_s
 MIR_c <- round(sum(sum_c_wnv) / sum(sum_c) * 1000 , digits=4); MIR_c
 MIR_n <- round(sum(sum_n_wnv) / sum(sum_n) * 1000 , digits=4); MIR_n
 
-## check later if MIR changes in C if only Culex is considered
+## check later if MIR changes in C if only Culex is considered - yes, 
+## A vexans, but only 1 of 20 inf
   
 ```
 
@@ -689,6 +690,9 @@ if (data_year == 2023) {
   totsum_s <- colSums(ab_s)
   totsum_c <- colSums(ab_c)
   totsum_n <- colSums(ab_n)
+  
+AB_mosq_infected <- rbind(totsum_rb,totsum_ra,totsum_s,totsum_c,totsum_n) 
+rownames(AB_mosq_infected) <- c("RB","RA", "S","C","N")
 
 AB_wnv_beta_rel <- AB_wnv_beta ## make copy
 
@@ -744,9 +748,7 @@ quantile_breaks <- function(xs, n = 10) {
   breaks <- quantile(xs, probs = seq(0, 1, length.out = n))
   breaks[!duplicated(breaks)]
 }
-mat_breaks <- quantile_breaks(my_c, n = 11)
-
-
+mat_breaks <- quantile_breaks(my_c, n = 49)
 
 
 p_heat_wnv_rel <- pheatmap(mat = my_c, 
@@ -755,7 +757,7 @@ p_heat_wnv_rel <- pheatmap(mat = my_c,
                            fontsize=16) 
 p_heat_wnv_rel
 
-pdf(paste0(dir_plot_path,"/Fig_heat_wnv_rel",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_heat_wnv_mir",suffix_for_plot,today,".pdf"), 
       width = 12, height = 10) 
   p_heat_wnv_rel
 dev.off()
@@ -774,7 +776,7 @@ p_heat <- pheatmap(log2(my_a+1), color = inferno(20),fontsize = 16) # logarithm!
 p_heat
 
 
-pdf(paste0(dir_plot_path,"/Fig_heat_mosqAB_log_",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_heat_mosqAB_log",suffix_for_plot,today,".pdf"), 
       width = 12, height = 10) 
   p_heat
 dev.off()
@@ -788,10 +790,10 @@ dev.off()
 my_b <- data.matrix(AB_wnv_beta)
 my_b 
 
-p_heat_wnv <- pheatmap(my_b, color = inferno(20), fontsize= 16) 
+p_heat_wnv <- pheatmap(my_b, color = inferno(20), fontsize= 16) ##
 p_heat_wnv
 
-pdf(paste0(here('plots'),"/Fig_heat_wnvAB_",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_heat_wnvAB",suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   p_heat_wnv
 dev.off()
@@ -804,113 +806,88 @@ summed info for complete sampling season.
 USe data frames of BC for wnv, mosq and aves. 
 For wnv and mosq choose dataset of combined yes/ unident yes
 
-## Dimension reduction - PCA derivates
 ### Create master table
 
-#### master table env covs
+Birds
 ```{r}
 #### env vars and aves spec across locations
-## use updated data set and add mean over min/mean/max temp measured
-master <- ab_aves[, c(1:(start_bird-1))]
 
-```
+names(ab_aves) ## 66 bird species - focus on the abundant ones - if at least 1 bird present
+ab_aves_floor <- floor(ab_aves[c(2:dim(ab_aves)[2])])
 
-#### master table aves
-```{r}
-master_aves_tmp <- AB_aves_beta ## here, birds have 0 abundance 
 
-## The following 23 birds have 0 abundance after rounding
-## Accipiter_gentilis, Acrocephalus_arundinaceus, Anthus_trivialis, Buteo_buteo, 
-## Carduelis_cannabina, Columba_oenas, Corvus_corax,Cuculus_canorus, Delichon_urbicum
-## Dendrocopos_medius, Dryocopus_martius,Falco_tinnunculus, Hippolais_icterina
-## Hirundo_rustica, Lanius_collurio, Locustella_naevia, Motacilla_alba,
-## Oriolus_oriolus, Picus_viridis, Parus_palustris, Phylloscopus_trochilus,Prunella_modularis,
-## Sylvia_borin, Sylvia_communis
-aves_to_remove <- c('Accipiter_gentilis', 'Acrocephalus_arundinaceus', 'Anthus_trivialis', 'Buteo_buteo','Carduelis_cannabina', 'Columba_oenas', 'Corvus_corax','Cuculus_canorus', 'Delichon_urbicum',
-  'Dendrocopos_medius', 'Dryocopus_martius','Falco_tinnunculus', 'Hippolais_icterina',
-  'Hirundo_rustica', 'Lanius_collurio', 'Locustella_naevia', 'Motacilla_alba',
-  'Oriolus_oriolus', 'Picus_viridis', 'Parus_palustris', 'Phylloscopus_trochilus','Prunella_modularis',
-  'Sylvia_borin', 'Sylvia_communis')
+aves_to_remove <- which(colSums(ab_aves_floor) == 0) 
+length(aves_to_remove) #remove 33 of 66
+names(aves_to_remove)
 
-master_aves <- master_aves_tmp[,- which(names(master_aves_tmp) %in% aves_to_remove)]
+master_aves_red <- ab_aves_floor[,-which(names(ab_aves_floor) %in% names(aves_to_remove))]
+master_aves <-cbind(ab_aves$Site,master_aves_red )
 head(master_aves)
 
+## resort sequence of df according to RB RA S C N
+master_aves_tmp <- rbind(master_aves[2,],
+                         master_aves[4,],
+                         master_aves[1,],
+                         master_aves[3,],
+                         master_aves[5,])
+names(master_aves_tmp)[names(master_aves_tmp) == 'ab_aves$Site'] <- 'site'
+master_aves <- master_aves_tmp
 
-tmp4 <- as.data.frame(t(master_aves))
-tmp4$bird_Spec <- rownames(tmp4)
-
-ft <- flextable(tmp4)
-save_as_docx(ft, path =  paste0(here('output','data-proc'),
-                    "/ft_aves_spec_per_location",suffix_for_plot,today,".docx"))
-
+ft <- flextable(master_aves)
+save_as_docx(ft, path =  paste0(dir_output_path,
+                    "/ft_aves_spec_per_location_modelled_reduced",suffix_for_plot,today,".docx"))
 ```
 
-#### master table mosq and wnv
-
-Check that suffix for plot is combined yes and unident yes! Otherwise, code does not work
-
+Abundance infected mosquitoes and MIR
 ```{r}
-suffix_for_plot
 
-master_mosq <- AB_mosq_beta
-master_wnv  <- AB_wnv_beta
+master_mosq_tmp <- AB_mosq_infected ## only choose the ones with infections
+## add total abundance and total measured 
+ab_mosq_per_site <- cbind(rowSums(AB_mosq_beta) )
+colnames(ab_mosq_per_site) <- "ab_mosq"
+master_mosq <- cbind(master_mosq_tmp,ab_mosq_per_site)
 
 
-## prepare the infection counts as env vars
-## this does not really work - only corr is water with infSum in pairs plot
-## also, it seems that summarized numbers dont work well, like bird _ab and bird_div in env
-## choose either or: either infsum with bird_ab etc, or single bird spec without bird_ab
-wnv_sum <- rowSums(master_wnv)
-AB_mosq_sum <- rowSums(AB_mosq_beta)
-master_totinf <-as.data.frame(wnv_sum)
-master_relinf <-as.data.frame(master_totinf/AB_mosq_sum)
-colnames(master_relinf) <- "rel_inf"
+master_wnv  <- AB_wnv_beta_rel
+master_wnv$MIR_per_site <- c(MIR_rb,MIR_ra,MIR_s,MIR_c,MIR_n)
 
-##per inf species
-master_wnv_rel <-as.data.frame(master_wnv/AB_mosq_sum)
-colnames(master_wnv_rel) <- c("relWNV_Aedes_vex", "relWNV_Ano_plumb",
-                              "relWNV_Cul_spp_comb",  "relWNV_unident" )
 ```
+
+environmental predictors
+```{r}
+myenv
+master_env_tmp <- rbind(myenv[2,],
+                         myenv[4,],
+                         myenv[1,],
+                         myenv[3,],
+                         myenv[5,])
+master_env <- master_env_tmp
+
+```
+
+
 
 ### Choose predictor combinations
 
 ```{r}
-## CHOOSE COMMUNITY of birds, mosquitoes combined + unidentified
-#com <- master_mosq 
-com <- cbind(master_mosq, master_aves) 
+## CHOOSE COMMUNITY of birds, mosquitoes infected and MIR
 
-flextable(com)
-
+##check SORTING with SamplingSite of dfs first!
+com <- cbind(master_env,master_mosq, master_aves[,-1],master_wnv) 
+env <- cbind(master_env,master_mosq,master_wnv) ## the lighter version
 
 ## crosscheck if there are NAs
 #View(com)
-#csum <- colSums(com) 
+#csum <- colSums(com[,-1]) 
 #any(is.na(csum))
 #which(is.na(csum))
 
 
-## CHOOSE ENVIRONMENTAL predictors (and infections)
-## spoiler: all "single_bird_div_rare_asy", "single_bird_ab_mod"
-## were highly correlated with
-## bird_ab and bird_div, so I leave them out, as they are models of a model of a model
-site_covs <- master_env[,c("bird_div","bird_ab","humPopDens",
-                           "water","treeCov","bushCov","imperv", "max_temp")]
-
-## and then add the infections
-## with inf - this one taken:
-# relinf and totinf also highly correlated
-env <- cbind(site_covs,master_relinf) #,master_totinf
-env
-
-
-env$treeCov <- round(env$treeCov,digits=2)
-env$rel_inf <- round(env$rel_inf,digits=4)
-for_ft <- cbind(master_env$Sampling_site,env)
-ft <- flextable(for_ft)
+ft <- flextable(com)
 ft
 save_as_docx(ft, path =
-             paste0(here('output','data-proc'),
-                    "/ft_envs",suffix_for_plot,today,".docx"))
+             paste0(dir_output_path,
+                    "/ft_vars_for_pca",suffix_for_plot,today,".docx"))
 
 
 ```
@@ -935,6 +912,27 @@ pdf(file = paste0(here('plots'),"/corr_envs_baseR",suffix_for_plot,today,".pdf")
                     upper = list(continuous = wrap("cor", size = 5)))
 dev.off()
 ```
+
+
+```{r}
+library(ggcorrplot)
+
+num_df <- env[sapply(env, is.numeric)]
+cor_mat <- cor(num_df, method = "kendall", use = "pairwise.complete.obs")
+
+
+pdf(file = paste0(dir_plot_path,"/corr_envs_kendall",suffix_for_plot,today,".pdf"),
+                  width = 30, height = 30)
+
+  ggcorrplot(cor_mat,
+           hc.order = TRUE,         # cluster similar variables
+           type = "upper",
+           lab = TRUE,              # add correlation numbers
+           colors = c("blue", "white", "red"))
+  dev.off()
+```
+
+
 
 ### PCA
 
