@@ -76,6 +76,8 @@ library(modelr)
 library(GGally)
 library(ggrepel)
 
+library(grid) ## for pheatmap-package
+
 ```
 
 ## Set themes
@@ -88,15 +90,22 @@ today
 data_year <- 2023 ## set at the beginning
 
 ## create output directory with most recent analysis results
-dirfilepath <- here('output', paste0('BUAdata_',data_year,'_analysisDate_',today) )
-ifelse(!dir.exists(file.path(dirfilepath)), 
-       dir.create(file.path(dirfilepath)), FALSE)
+dir_output_path <- here('output', paste0('BUAdata_',data_year,'_analysisDate_',today) )
+ifelse(!dir.exists(file.path(dir_output_path)), 
+       dir.create(file.path(dir_output_path)), FALSE)
+
+dir_plot_path <- here('plots', paste0('BUAdata_',data_year,'_analysisDate_',today) )
+ifelse(!dir.exists(file.path(dir_plot_path)), 
+       dir.create(file.path(dir_plot_path)), FALSE)
 
 
-theme_set(d6::theme_d6(base_size = 18))
 
-site.cols  <- c("#CDCD00", "#6CA6CD","#00EE76","#FF7F50","#006400")
-site.names <- c("S",       "RB",      "C",     "RA",     "N")
+#theme_set(d6::theme_d6(base_size = 18)) ##TODO does not work, does not plot axes
+theme_set(theme_bw(base_size = 18))
+
+site.cols  <- c("#90EE90", "#006400","#FF7F50","#6CA6CD","#CDCD00")
+site.names <- c("C",       "N",      "RA",     "RB",     "S")
+
 
 ```
 
@@ -388,6 +397,11 @@ head(mydat_to_run)
 ## now continue to work with mydat_to_run
 
 }
+
+
+## TODO put into a loop? create separate dfs and then run the following in a clean loop?
+## calling to the different datasets?
+## is there a way to call a different script?
 ```
 
 
@@ -420,11 +434,11 @@ sum_n_wnv <- as.numeric(colSums(N[, c(colstart_wnv:colend_wnv)], na.rm=T))
 
 if (data_year == 2024){
 ## just take the column for the sum - has just 1 WNV column 
-sum_rotha_wnv <- as.numeric(sum(rotha[, colstart_wnv], na.rm=T))
-sum_linde_wnv <- as.numeric(sum(linde[, colstart_wnv], na.rm=T))
-sum_malzf_wnv <- as.numeric(sum(malzf[, colstart_wnv], na.rm=T))
-sum_fried_wnv <- as.numeric(sum(fried[, colstart_wnv], na.rm=T))
-sum_suedg_wnv <- as.numeric(sum(suedg[, colstart_wnv], na.rm=T))
+sum_rb_wnv <- as.numeric(sum(RB[, colstart_wnv], na.rm=T))
+sum_ra_wnv <- as.numeric(sum(RA[, colstart_wnv], na.rm=T))
+sum_s_wnv <- as.numeric(sum(S[, colstart_wnv], na.rm=T))
+sum_fried_wnv <- as.numeric(sum(C[, colstart_wnv], na.rm=T))
+sum_n_wnv <- as.numeric(sum(N[, colstart_wnv], na.rm=T))
 }
 
 
@@ -437,6 +451,8 @@ MIR_ra <- round(sum(sum_ra_wnv) / sum(sum_ra) * 1000 , digits=4); MIR_ra
 MIR_s <- round(sum(sum_s_wnv) / sum(sum_s) * 1000 , digits=4); MIR_s
 MIR_c <- round(sum(sum_c_wnv) / sum(sum_c) * 1000 , digits=4); MIR_c
 MIR_n <- round(sum(sum_n_wnv) / sum(sum_n) * 1000 , digits=4); MIR_n
+
+## check later if MIR changes in C if only Culex is considered
   
 ```
 
@@ -475,44 +491,54 @@ AB_wnv_site
 ## https://github.com/Lagkouvardos/Rhea/blob/master/3.Beta-Diversity/Beta-Diversity.R
 
 ## for infected 
+if (data_year == 2023) {
 wnv_div0 <- iNEXT(AB_wnv_site, q=0, datatype="abundance") 
 wnv_r <- ggiNEXT(wnv_div0, type=1, se=TRUE, facet.var="None",
               color.var="Assemblage", grey=FALSE) + 
-        ylab('Diversity of WNV-infected mosquito species')
-pdf(paste0(here('plots'),"/Fig_rarefaction_wnv_q0_",suffix_for_plot,today,".pdf"), 
+  scale_colour_manual(values = site.cols) +
+  scale_fill_manual(values = site.cols) +
+  ylab('Diversity of WNV-infected mosquito species') + 
+  xlab('Number of samples')
+
+plot(wnv_r)
+
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_wnv_q0_",suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   grid.arrange(wnv_r, ncol=1)
 dev.off()
+}
+
+## makes no sense for 2024 as there is no diversity in infected
 ```
 
 ### Figure S1
 
-Depending on which data-set was chosen (combining or not speices into groups; including unidentified or not), the following figure produces the supplementary figure S1.
+Depending on which data-set was chosen (combining or not the species into groups; including unidentified or not), the following figure produces the supplementary figure S1.
 
 ```{r}
 ## for mosquitos
 mosq_div0 <- iNEXT(AB_mosq_site, q=0, datatype="abundance") #, size=5000)
 mosq_div0$AsyEst ## save this output
 write.csv(x = mosq_div0$AsyEst, 
-   file = paste0(here("output","data-proc"),"/Rarefaction_mosq",
+   file = paste0(dir_output_path,"/Rarefaction_mosq",
             suffix_for_plot,today,".csv"))
 
 
 #### Hill q = 0 ; richness/ diversity
 g0 <- ggiNEXT(mosq_div0, type=1, se=TRUE, facet.var="None",
               color.var="Assemblage", 
-              grey=FALSE) 
+              grey=FALSE) +
+       scale_colour_manual(values = site.cols) +
+       scale_fill_manual(values = site.cols) +
+       ylab('Diversity of mosquito species') + 
+       xlab('Number of mosquitoes')
+g0
 
-pdf(paste0(here('plots'),"/Fig_rarefaction_mosq_q0",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q0",suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   grid.arrange(g0, ncol=1)
 dev.off()
 
-## get color code for later
-palette_extract <- ggplot_build(ggiNEXT(mosq_div0, 
-                                        facet.var="None", 
-                                        color.var="Assemblage") )
-as.vector(unique(palette_extract$data[[1]][1]))$colour
 ```
 
 #### Shannon-like, Simpson-like
@@ -522,16 +548,19 @@ as.vector(unique(palette_extract$data[[1]][1]))$colour
 mosq_div1 <- iNEXT(AB_mosq_site, q=1, datatype="abundance")
 g1 <- ggiNEXT(mosq_div1, type=1, se=TRUE, facet.var="None",  color.var="Assemblage", 
         grey=FALSE) +
-  theme_bw(base_size = 18) +
   theme(legend.position="right") +
   ylab('Hill number  q = 1') +
   guides(linetype=guide_legend(title="Method"), 
         colour=guide_legend(title="Site"), 
         fill=guide_legend(title="Site"), 
-        shape=guide_legend(title="Site")) 
+        shape=guide_legend(title="Site")) +
+       scale_colour_manual(values = site.cols) +
+       scale_fill_manual(values = site.cols) +
+       xlab('Number of mosquitoes')
 
+g1
 
-pdf(paste0(here('plots'),"/Fig_rarefaction_mosq_q1_",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q1_",suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   grid.arrange(g1, ncol=1)
 dev.off()
@@ -547,43 +576,15 @@ g2 <- ggiNEXT(mosq_div2, type=1, se=TRUE, facet.var="None", color.var="Assemblag
   guides(linetype=guide_legend(title="Method"), 
         colour=guide_legend(title="Site"), 
         fill=guide_legend(title="Site"), 
-        shape=guide_legend(title="Site")) 
+        shape=guide_legend(title="Site")) +
+         scale_colour_manual(values = site.cols) +
+       scale_fill_manual(values = site.cols) +
+       xlab('Number of mosquitoes')
+g2
 
-pdf(paste0(here('plots'),"/Fig_rarefaction_mosq_q2_",suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q2_",suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
   grid.arrange(g2, ncol=1)
-dev.off()
-
-
-
-## for modelled bird abundance
-aves_div0 <- iNEXT(AB_aves_site, q=0, datatype="abundance") #, size=5000)
-aves_div0$AsyEst ## save this output
-write.csv(x = aves_div0$AsyEst, 
-          file = paste0(here("output", "data-proc"), "/Rarefaction_aves_",today,".csv"))
-
-#compare with model output:
-ab_aves$Bird.species.richness; ab_aves$Site
-##[1] 25            19            32          27                  37
-##[1] "Malzfabrik" "Rothariweg"  "Friedhof"  "Lindenhofsiedlung" "Suedgelaende" 
-
-aves_div0$AsyEst$Estimator[aves_div0$AsyEst$Diversity == 'Species richness']
-## 105.65289  74.08247  53.70522  31.92070  98.55245
-aves_div0$AsyEst$Observed[aves_div0$AsyEst$Diversity == 'Species richness']
-##   34         34       26         22         35
-##  fried      #linde    malz       rotha     sued
-
-
-
-
-#### Hill q = 0 ; richness/ diversity 
-g0 <- ggiNEXT(aves_div0, type=1, se=TRUE, facet.var="None",
-              color.var="Assemblage", 
-              grey=FALSE) 
-
-pdf(paste0(here('plots'),"/Fig_rarefaction_aves_q0_",suffix_for_plot,today,".pdf"), 
-      width = 10, height = 10) 
-  grid.arrange(g0, ncol=1)
 dev.off()
 ```
 
@@ -593,13 +594,13 @@ dev.off()
 
 ```{r}
 AB_mosq_beta <- rbind.data.frame(
-                     'rotha' = sum_rotha,
-                     'linde' = sum_linde,
-                     'malzf' = sum_malzf,
-                     'fried' = sum_fried,
-                     'suedg' = sum_suedg)
+                     'rb' = sum_rb,
+                     'ra' = sum_ra,
+                     's' = sum_s,
+                     'c' = sum_c,
+                     'n' = sum_n)
 colnames(AB_mosq_beta) <- colnames(mydat_to_run)[colstart:colend]
-rownames(AB_mosq_beta) <- c('rotha','linde','malzf','fried','sued')
+rownames(AB_mosq_beta) <- c('RB','RA','S','C','N')
 head(AB_mosq_beta)
 
 BC_vegan_diss <- round(vegdist(AB_mosq_beta, method = 'bray'),digits=2)
@@ -614,11 +615,11 @@ tmp2$X <-rownames(tmp1)
 #tmp2
 
 ft <- flextable(tmp2)
-save_as_docx(ft, path =  paste0(here('output','data-proc'),
+save_as_docx(ft, path =  paste0(dir_output_path,
                     "/ft_AB_mosq_BrayCurtis_similarity",suffix_for_plot,today,".docx"))
 
 
-## similarity EXCLUDING unidentified mosquitoes/ combined dataset
+## similarity EXCLUDING unidentified mosquitoes/ combined dataset (almost same as uncombined)
 
 ##       rotha linde malzf fried
 ## linde  0.40                  
@@ -629,15 +630,18 @@ save_as_docx(ft, path =  paste0(here('output','data-proc'),
 
 ### BC for WNV
 
+do not run this for 2024, but AB_wnv_beta needed for MIR
+
 ```{r}
+#if(data_year == 2023){
 AB_wnv_beta <- rbind.data.frame(
-                     'rotha' = sum_rotha_wnv,
-                     'linde' = sum_linde_wnv,
-                     'malzf' = sum_malzf_wnv,
-                     'fried' = sum_fried_wnv,
-                     'suedg' = sum_suedg_wnv)
+                     'rb' = sum_rb_wnv,
+                     'ra' = sum_ra_wnv,
+                     's' = sum_s_wnv,
+                     'c' = sum_c_wnv,
+                     'n' = sum_n_wnv)
 colnames(AB_wnv_beta) <- colnames(mydat_to_run)[colstart_wnv:colend_wnv]
-rownames(AB_wnv_beta) <- c('rotha','linde','malzf','fried','sued')
+rownames(AB_wnv_beta) <- c('RB','RA','S','C','N')
 head(AB_wnv_beta)
 
 BC_wnv_diss <- round(vegdist(AB_wnv_beta, method = 'bray'),digits=2)
@@ -651,11 +655,11 @@ tmp2$X <-rownames(tmp1)
 #tmp2
 
 ft <- flextable(tmp2)
-save_as_docx(ft, path =  paste0(here('output','data-proc'),
+save_as_docx(ft, path =  paste0(dir_output_path,
                     "/ft_wnv_abs_BrayCurtis_similarity",suffix_for_plot,today,".docx"))
 
-
-## similarity INCLUDING unidentified mosquitoes /comb dataset
+#}
+## similarity INCLUDING unidentified mosquitoes /comb dataset - similar to uncombined
 
 ##       rotha linde malzf fried
 ## linde  0.08                  
@@ -665,27 +669,41 @@ save_as_docx(ft, path =  paste0(here('output','data-proc'),
 
 ```
 
-### BC for WNV rel
+### BC for MIR
 
+NOT FOR 2024
 ```{r}
-totsum_rotha <- sum(sum_rotha)
-totsum_linde <- sum(sum_linde)
-totsum_malzf <- sum(sum_malzf)
-totsum_fried <- sum(sum_fried)
-totsum_suedg <- sum(sum_suedg)
+if (data_year == 2023) {
+
+  wnv_inf_spec <- names(AB_wnv_beta) ## TODO grep WNV with AB
+  ab_inf_spec <- c("AB_Culex_pipiens_spp","AB_Culex_spp" ,"AB_Aedes_vexans","AB_Anopheles_plumbeus")
+ ## TODO again coded with hard wired numbers
+  ab_rb <- RB[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  ab_ra <- RA[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  ab_s <- S[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  ab_c <- C[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  ab_n <- N[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  
+  totsum_rb <- colSums(ab_rb)
+  totsum_ra <- colSums(ab_ra)
+  totsum_s <- colSums(ab_s)
+  totsum_c <- colSums(ab_c)
+  totsum_n <- colSums(ab_n)
 
 AB_wnv_beta_rel <- AB_wnv_beta ## make copy
 
-AB_wnv_beta_rel[1,] <- round(AB_wnv_beta[1,] / totsum_rotha * 1000, digits = 2)
-AB_wnv_beta_rel[2,] <- round(AB_wnv_beta[2,] / totsum_linde * 1000, digits = 2)
-AB_wnv_beta_rel[3,] <- round(AB_wnv_beta[3,] / totsum_malzf * 1000, digits = 2)
-AB_wnv_beta_rel[4,] <- round(AB_wnv_beta[4,] / totsum_fried * 1000, digits = 2)
-AB_wnv_beta_rel[5,] <- round(AB_wnv_beta[5,] / totsum_suedg * 1000, digits = 2)
+AB_wnv_beta_rel[1,] <- round(AB_wnv_beta[1,] / totsum_rb * 1000, digits = 2)
+AB_wnv_beta_rel[2,] <- round(AB_wnv_beta[2,] / totsum_ra * 1000, digits = 2)
+AB_wnv_beta_rel[3,] <- round(AB_wnv_beta[3,] / totsum_s * 1000, digits = 2)
+AB_wnv_beta_rel[4,] <- round(AB_wnv_beta[4,] / totsum_c * 1000, digits = 2)
+AB_wnv_beta_rel[5,] <- round(AB_wnv_beta[5,] / totsum_n * 1000, digits = 2)
 
 AB_wnv_beta_rel
-```
+ft <- flextable(AB_wnv_beta_rel)
+save_as_docx(ft, path =  paste0(dir_output_path,
+                    "/ft_wnv_mir_per_species",suffix_for_plot,today,".docx"))
 
-```{r}
+
 BC_wnv_diss_rel <- round(vegdist(AB_wnv_beta_rel, method = 'bray'),digits=2)
 BC_wnv_diss_rel #dissimilarity
 BC_wnv_sim_rel <- 1-BC_wnv_diss_rel
@@ -696,45 +714,22 @@ tmp2 <- as.data.frame(tmp1,row.names=rownames(tmp1))
 tmp2$X <-rownames(tmp1) 
 #tmp2
 
+
+## this is similarity in infected species groups, not in total inf
 ft <- flextable(tmp2)
-save_as_docx(ft, path =  paste0(here('output','data-proc'),
-                    "/ft_wnv_rel_BrayCurtis_similarity",suffix_for_plot,today,".docx"))
+save_as_docx(ft, path =  paste0(dir_output_path,
+                    "/ft_wnv_mir_BrayCurtis_similarity",suffix_for_plot,today,".docx"))
+}
 
 ```
 
-
-### BC for aves
-
-```{r}
-AB_aves_beta <- rbind.data.frame(
-                     'rotha' = as.numeric(as.vector(ab_aves_1[2,])),
-                     'linde' = as.numeric(as.vector(ab_aves_1[4,])),
-                     'malzf' = as.numeric(as.vector(ab_aves_1[1,])),
-                     'fried' = as.numeric(as.vector(ab_aves_1[3,])),
-                     'suedg' = as.numeric(as.vector(ab_aves_1[5,]))
-                                )
-colnames(AB_aves_beta) <- colnames(ab_aves_1)
-rownames(AB_aves_beta) <- c('rotha','linde','malzf','fried','sued')
-head(AB_aves_beta)
-
-BC_vegan_diss <- round(vegdist(AB_aves_beta, method = 'bray'),digits=2)
-BC_vegan_diss #dissimilarity
-BC_vegan_sim <- 1-BC_vegan_diss
-BC_vegan_sim #similarity
-
-#       rotha linde malzf fried
-# linde  0.72
-# malzf  0.91  0.76
-# fried  0.57  0.83  0.60
-# sued   0.52  0.78  0.55  0.89
-```
 
 
 ## Hierarchical cluster analysis
 
 Check association of mosquitoes to make subgroups for alluvial plot/ NMDS. For this, create a table with the mosquito abundances per site, if WNS found yes/ no, and other predictors (habitat/ bird abundance, temp?) ?
 
-### Fig 5B Relative infection prob per total mosq abundance
+### Fig 5B Relative infection prob per relative mosq abundance
 
 https://davetang.org/muse/2018/05/15/making-a-heatmap-in-r-with-the-pheatmap-package/
 
@@ -757,11 +752,11 @@ mat_breaks <- quantile_breaks(my_c, n = 11)
 p_heat_wnv_rel <- pheatmap(mat = my_c, 
                            color = inferno(length(mat_breaks) - 1),
                            breaks= mat_breaks,
-                           fontsize=14) 
+                           fontsize=16) 
 p_heat_wnv_rel
 
-pdf(paste0(here('plots'),"/Fig_heat_wnv_rel",suffix_for_plot,today,".pdf"), 
-      width = 15, height = 10) 
+pdf(paste0(dir_plot_path,"/Fig_heat_wnv_rel",suffix_for_plot,today,".pdf"), 
+      width = 12, height = 10) 
   p_heat_wnv_rel
 dev.off()
 
@@ -775,32 +770,15 @@ dev.off()
 my_a <- data.matrix(AB_mosq_beta)
 my_a 
 
-p_heat <- pheatmap(log2(my_a+1), color = inferno(20)) # logarithm!
+p_heat <- pheatmap(log2(my_a+1), color = inferno(20),fontsize = 16) # logarithm!
 p_heat
 
-pdf(paste0(here('plots'),"/Fig_heat_mosqAB_log_",suffix_for_plot,today,".pdf"), 
-      width = 15, height = 10) 
+
+pdf(paste0(dir_plot_path,"/Fig_heat_mosqAB_log_",suffix_for_plot,today,".pdf"), 
+      width = 12, height = 10) 
   p_heat
 dev.off()
 ```
-
-
-### Aves modelled abuncance (log)
-
-```{r}
-
-my_a <- data.matrix(AB_aves_beta)
-my_a 
-
-p_heat <- pheatmap(log2(my_a+1), color = inferno(20)) # logarithm!
-p_heat
-pdf(paste0(here('plots'),"/Fig_heat_avesAB_log_",suffix_for_plot,today,".pdf"), 
-      width = 15, height = 10) 
-  p_heat
-dev.off()
-```
-
-
 
 
 ### Absolute values wnv
@@ -810,11 +788,11 @@ dev.off()
 my_b <- data.matrix(AB_wnv_beta)
 my_b 
 
-p_heat_wnv <- pheatmap(my_b, color = inferno(20)) 
+p_heat_wnv <- pheatmap(my_b, color = inferno(20), fontsize= 16) 
 p_heat_wnv
 
 pdf(paste0(here('plots'),"/Fig_heat_wnvAB_",suffix_for_plot,today,".pdf"), 
-      width = 15, height = 10) 
+      width = 10, height = 10) 
   p_heat_wnv
 dev.off()
 
@@ -822,7 +800,9 @@ dev.off()
 
 # CHECK DATASET HERE
 
-summed info for complete sampling season. USe data frames of BC for wnv, mosq and aves. For wnv and mosq choose dataset of combined yes/ unident yes
+summed info for complete sampling season. 
+USe data frames of BC for wnv, mosq and aves. 
+For wnv and mosq choose dataset of combined yes/ unident yes
 
 ## Dimension reduction - PCA derivates
 ### Create master table
@@ -832,107 +812,7 @@ summed info for complete sampling season. USe data frames of BC for wnv, mosq an
 #### env vars and aves spec across locations
 ## use updated data set and add mean over min/mean/max temp measured
 master <- ab_aves[, c(1:(start_bird-1))]
-colnames(master) <- c('locationNo','Sampling_site','bird_div','bird_ab','insect_ab',      'humPopDens','LU_code','water','treeCov','bushCov','imperv','LU') 
 
-head(master)
-
-## make water source presence numeric
-master$water <- ifelse(master$Sampling_site == "Malzfabrik", 1,
-                     ifelse(master$Sampling_site == "Rothariweg", 0,
-                       ifelse(master$Sampling_site == "Lindenhofsiedlung", 1,
-                         ifelse(master$Sampling_site == "Suedgelaende", 0, 1)
-                        )
-                      ) 
-                    )
-
-## add climatic variables
-clim_vars <- group_by(mydat_to_run, Sampling_site)
-tmp3 <- summarise(clim_vars, mean(MIN_temp), mean (MAX_temp), mean(MEAN_temp),
-          mean(MIN_hum), mean(MAX_hum), mean (MEAN_hum) )
-
-## values quite correlated, so only take mean (MAX_temp):
-## doing by hand was faster than rearranging table:
-
-ft <- flextable(as.data.frame(tmp3))
-save_as_docx(ft, path =  paste0(here('output','data-proc'),
-                    "/ft_climatic_vars_per_location",suffix_for_plot,today,".docx"))
-
-
-
-
-master$max_temp <- ifelse(master$Sampling_site == "Malzfabrik", 29.9,
-                     ifelse(master$Sampling_site == "Rothariweg", 26.3,
-                       ifelse(master$Sampling_site == "Lindenhofsiedlung", 30.0,
-                         ifelse(master$Sampling_site == "Suedgelaende", 27.1, 25.8)
-                        )
-                      ) 
-                    )
-
-
-## add info from rarefaction bird diversity single species
-
-#add  model output: ## TODO -> script it
-#aves_div0$AsyEst$Observed[aves_div0$AsyEst$Diversity == 'Species richness' & aves_div0$AsyEst$Assemblage == 'fried'] .... too much scripting, easier by hand
-
-#aves_div0$AsyEst$Observed[aves_div0$AsyEst$Diversity == 'Species richness']
-##   34         34       26         22         35
-
-master$single_bird_div_rare_obs <- ifelse(master$Sampling_site == "Malzfabrik", 26,
-                           ifelse(master$Sampling_site == "Rothariweg", 22,
-                           ifelse(master$Sampling_site == "Lindenhofsiedlung", 34,
-                           ifelse(master$Sampling_site == "Suedgelaende", 35, 34)
-                        )
-                      ) 
-                    )
-#aves_div0$AsyEst$Estimator[aves_div0$AsyEst$Diversity == 'Species richness']
-## 105.65289  74.08247  53.70522  31.92070  98.55245
-##  fried      #linde    malz       rotha     sued
-
-master$single_bird_div_rare_asy <- ifelse(master$Sampling_site == "Malzfabrik", 54,
-                           ifelse(master$Sampling_site == "Rothariweg", 32,
-                           ifelse(master$Sampling_site == "Lindenhofsiedlung", 74,
-                           ifelse(master$Sampling_site == "Suedgelaende", 99, 106)
-                        )
-                      ) 
-                    )
-
-## see crosscheck line 251 for abundance
-# [1] "Malzfabrik"
-# [1] 71.07081
-# [1] 72
-# [1] "Rothariweg"
-# [1] 64.5013
-# [1] 52
-# [1] "Friedhof"
-# [1] 123.4404
-# [1] 132
-# [1] "Lindenhofsiedlung"
-# [1] 99.3946
-# [1] 76
-# [1] "Suedgelaende"
-# [1] 145.5015
-# [1] 91
-
-
-## Sum across the single bird spec model Planillo et al. 2021 DivDist - see lines above
-
-master$single_bird_ab_mod <- ifelse(master$Sampling_site == "Malzfabrik", 71,
-                           ifelse(master$Sampling_site == "Rothariweg", 65,
-                           ifelse(master$Sampling_site == "Lindenhofsiedlung", 99,
-                           ifelse(master$Sampling_site == "Suedgelaende", 145, 123)
-                        )
-                      ) 
-                    )
-
-head(master)
-
-
-## reshuffle the site numbers accordingly - sequence had changed
-#rownames(AB_aves_beta) <- c('rotha','linde','malzf','fried','sued')
-
-master_env <- master[c(2,4,1,3,5),]
-master_env$Sampling_site <- c('rotha','linde','malzf','fried','sued') ## use shortcuts
-head(master_env)
 ```
 
 #### master table aves
