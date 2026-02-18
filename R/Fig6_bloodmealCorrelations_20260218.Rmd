@@ -1,0 +1,184 @@
+---
+title: "WNS bloodmeals in mosquitoes in Berlin 2023 and 2024"
+author: "Steph Kramer kramer@izw-berlin.de"
+date: "`r Sys.setlocale('LC_TIME','C'); paste('Last Update', format(Sys.time(), '%B %e, %Y')) `"
+output:
+  rmdformats::readthedown:
+    highlight: kate
+    code_folding: show
+    toc_depth: 4
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+params:
+  date: !r Sys.Date()
+---
+
+<style>
+h1 {
+  color: Orange ;
+}
+h2, h3, h4, h5, h6, legend {
+  color: Indigo ;
+}
+p {
+  line-height:170%;
+}
+{
+sidebar h2 {
+  background-color: Indigo;
+}
+code {
+  color: Indigo ;
+}
+.exercise {
+  color: #824b00;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
+                      dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1)
+Sys.setlocale("LC_TIME", "C")
+```
+
+# Preparation
+
+## Load helpful stuff 
+```{r}
+#devtools::install_github("EcoDynIZW/d6")
+library(d6)
+#d6::install_d6_packages(geo = TRUE)
+library(remotes)
+
+library(here) ;here()
+library(tidyverse)
+library(tidyr)
+
+## plot helpers
+library(patchwork)
+library(ggplot2)
+library(gridExtra)
+library(viridis)
+library(flextable)
+
+## additional libraries:
+library(lubridate)
+library(vroom)
+library(readxl)
+
+## analysis
+library(iNEXT)
+library(vegan)
+library(pheatmap)
+library(ggcorrplot)
+
+library(modelr)
+library(GGally)
+library(ggrepel)
+```
+
+## Set themes
+
+```{r}
+theme_set(theme_bw(base_size = 18))
+# theme_set(d6::theme_d6()) ##does not always work
+
+today <- Sys.Date()
+today
+```
+
+
+# START HERE
+
+## Load cleaned data
+```{r}
+data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combined
+suffix_for_plot <- "_bloodmeal_"
+
+
+if (data_year == 2023) {
+  mydat <- read.table(here("data_raw", "CorinnaPatzinaMehling_2023_2024", 
+                         "BE23_BUA_correlation_data20260218.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+
+  ## alternatives:
+  #mydat <- read_delim("data_raw/CorinnaPatzinaMehling_2023_2024/BE24_BUA_correlation_data20260218.csv", 
+  #    delim = ";", escape_double = FALSE, trim_ws = TRUE)
+  #?read.csv
+  #?read_csv 
+
+
+} else
+  if (data_year == 2024) {
+    
+    mydat <- read.table(here("data_raw", "CorinnaPatzinaMehling_2023_2024", 
+                         "BE24_BUA_correlation_data20260218.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+  } else { 
+      
+      mydat <- read.table(here("data_raw", "CorinnaPatzinaMehling_2023_2024", 
+                         "BE23-24_BUA_correlation_data20260218.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+      }
+
+
+head(mydat)
+str(mydat)
+
+```
+
+## Run correlation
+
+```{r}
+
+num_df <- mydat[,-1] ## delete the non-numeric site variable
+
+## check if there are variance issues - TODO - geht sicher in einer Zeile!
+## only concerns 2024 data
+tmp1 <- scale(num_df)
+(a <- which(is.na(tmp1))) ## same amount of birds present, variance is 0 -> delete columns
+
+if (length(a) > 0){
+  tmp2 <- apply(tmp1, 2, function(x) all(is.na(x)))
+  col_pos <- which(tmp2 == TRUE)
+
+  to_del <- c(col_pos[[1]],col_pos[[2]]) ## TODO automatize to length of col_pos
+  tmp3 <- tmp1[,-to_del]
+  } else {tmp3 <- num_df} 
+
+
+## run correlation
+cor_mat <- cor(tmp3, method = "kendall", use = "pairwise.complete.obs")
+
+
+pdf(file = paste0(here('plots'),"/",data_year,"/corr_envs_kendall_",data_year,suffix_for_plot,today,".pdf"),
+                  width = 20, height = 25)
+
+  ggcorrplot(cor_mat,
+           hc.order = TRUE,         # cluster similar variables
+           type = "upper",
+           lab = TRUE, 
+           lab_size = 4,
+           tl.cex = 12,
+           legend.title = "Kendall's tau",
+           outline.color = "white",
+           insig = 'blank',
+           digits = 1,
+           colors = c("blue", "white", "red"))
+  
+dev.off()
+```
+
+
+<br><hr><br>
+
+<details><summary>Session Info</summary>
+
+```{r sessionInfo}
+Sys.time()
+#git2r::repository() ## uncomment if you are using GitHub
+sessionInfo()
+```
+
+</details>
