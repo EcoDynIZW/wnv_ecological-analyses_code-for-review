@@ -88,8 +88,6 @@ if (data_year == 2023) {
   
   } else
   
-  
-  
   ## ------------------------   2024      ------------------------------- ###
   if (data_year == 2024) {
     
@@ -122,6 +120,4 @@ myenv <- myenvblood[, c(1:18)]
 ab_aves <- read.table(here("data", "bird_abundance_per_site_modelled.csv"), 
                       sep = "\t", dec = ".", header = TRUE)
 
-
-
-
+################################################################################

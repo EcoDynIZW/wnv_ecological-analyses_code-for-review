@@ -52,47 +52,16 @@ data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combin
 suffix_for_plot <- "_bloodmeal_"
 
 source(here::here('R','source-file-with-helper-functions.R'))
+
+str(myenvblood)
 ```
 
-
-## Load cleaned data
-```{r}
-if (data_year == 2023) {
-  mydat <- read.table(here("data",
-                         "BE23_BUA_correlation_data20260218.csv"), 
-                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
-
-  ## alternatives:
-  #mydat <- read_delim("data_raw/CorinnaPatzinaMehling_2023_2024/BE24_BUA_correlation_data20260218.csv", 
-  #    delim = ";", escape_double = FALSE, trim_ws = TRUE)
-  #?read.csv
-  #?read_csv 
-
-
-} else
-  if (data_year == 2024) {
-    
-    mydat <- read.table(here("data",  
-                         "BE24_BUA_correlation_data20260218.csv"), 
-                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
-  } else { 
-      
-      mydat <- read.table(here("data",  
-                         "BE23-24_BUA_correlation_data20260218.csv"), 
-                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
-      }
-
-
-head(mydat)
-str(mydat)
-
-```
 
 ## Run correlation
 
 ```{r}
 
-num_df <- myenv[,-1] ## delete the non-numeric site variable
+num_df <- myenvblood[,-1] ## delete the non-numeric site variable
 
 ## check if there are variance issues - TODO - geht sicher in einer Zeile!
 ## only concerns 2024 data
