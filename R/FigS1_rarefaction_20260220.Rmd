@@ -78,22 +78,41 @@ tmp1 <- tmp[, -c(a1,a2)]
 ## select only the columns with mosquitoes
 i <- grep("AB_", names(tmp1) )
 length(i) ## this is mosquito diversity across all sites
-tmp2 <- tmp1[,c(1,i)]
+ab_mosq <- tmp1[,c(1,i)]
 
 ## select only the columns with infected
 j <- grep("WNV_", names(tmp1) )
 length(j) ## this is infected mosquito diversity across all sites
-tmp3 <- tmp1[,c(1,j)]
+ab_mosq_wnv <- tmp1[,c(1,j)]
 
 ```
 
-## 
+### Create lists for rarefaction 
 ```{r}
 
+AB_mosq_site <- tapply(ab_mosq[,-1], ab_mosq$site, colSums ) ## first column needs to be taken out
+AB_wnv_site <- tapply(ab_mosq_wnv[,-1], ab_mosq_wnv$site, colSums ) 
+
+### continue here
+AB_mosq_test <- list('RB' = unname(AB_mosq_site$RB),
+                     'RA' = unname(AB_mosq_site$RA),
+                     'S' = unname(AB_mosq_site$S),
+                     'C' = unname(AB_mosq_site$C),
+                     'N' = unname(AB_mosq_site$N)
+                     )
+AB_mosq_test
 ```
 
 
+## Rarefaction mosquitoes
+```{r}
+mosq_div0 <- iNEXT(AB_mosq_test, q=0, datatype="abundance") 
+mosq_div0$AsyEst ## save this output
+write.csv(x = mosq_div0$AsyEst, 
+   file = paste0(dir_output_path,"/Rarefaction_mosq",
+            suffix_for_plot,today,".csv"))
 
+```
 
 
 
