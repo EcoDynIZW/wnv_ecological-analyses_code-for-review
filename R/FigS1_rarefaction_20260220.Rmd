@@ -1,0 +1,114 @@
+---
+title: "WNS bloodmeals in mosquitoes in Berlin 2023 and 2024"
+author: "Steph Kramer kramer@izw-berlin.de"
+date: "`r Sys.setlocale('LC_TIME','C'); paste('Last Update', format(Sys.time(), '%B %e, %Y')) `"
+output:
+  rmdformats::readthedown:
+    highlight: kate
+    code_folding: show
+    toc_depth: 4
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+params:
+  date: !r Sys.Date()
+---
+
+<style>
+h1 {
+  color: Orange ;
+}
+h2, h3, h4, h5, h6, legend {
+  color: Indigo ;
+}
+p {
+  line-height:170%;
+}
+{
+sidebar h2 {
+  background-color: Indigo;
+}
+code {
+  color: Indigo ;
+}
+.exercise {
+  color: #824b00;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
+                      dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1)
+Sys.setlocale("LC_TIME", "C")
+```
+
+
+# Bloodmeal correlations
+
+## Settings
+
+```{r}
+data_year <- 2023 ## set at the beginning - set to 9999 if data_years are combined
+suffix_for_plot <- "_mosq_rarefaction_"
+
+source(here::here('R','source-file-with-helper-functions.R'))
+
+str(mymosq)
+```
+
+
+## Prepare dataset
+
+### Separate mosquitoes into sus and inf
+```{r}
+
+
+tmp <- mymosq
+
+## TODO to discuss because just 1 day; does not matter for rarefaction
+myrow <- which(tmp$Date == '2023-06-19')
+myrow
+if (length(myrow) > 0) {tmp[-myrow,] } 
+
+## delete column of unidentifieds
+a1 <- which(names(tmp) == "AB_unidentified")
+a2 <- which(names(tmp) == "WNV_unidentified")
+tmp1 <- tmp[, -c(a1,a2)]
+
+## select only the columns with mosquitoes
+i <- grep("AB_", names(tmp1) )
+length(i) ## this is mosquito diversity across all sites
+tmp2 <- tmp1[,c(1,i)]
+
+## select only the columns with infected
+j <- grep("WNV_", names(tmp1) )
+length(j) ## this is infected mosquito diversity across all sites
+tmp3 <- tmp1[,c(1,j)]
+
+```
+
+## 
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+<br><hr><br>
+
+<details><summary>Session Info</summary>
+
+```{r sessionInfo}
+Sys.time()
+#git2r::repository() ## uncomment if you are using GitHub
+sessionInfo()
+```
+
+</details>
