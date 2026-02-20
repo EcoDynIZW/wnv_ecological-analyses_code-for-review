@@ -1,0 +1,257 @@
+---
+title: "PCA for WNS in mosquitoes in Berlin 2023 and 2024"
+author: "Steph Kramer kramer@izw-berlin.de"
+date: "`r Sys.setlocale('LC_TIME','C'); 
+        paste('Last Update', format(Sys.time(), '%B %e, %Y')) `"
+output:
+  rmdformats::readthedown:
+    highlight: kate
+    code_folding: show
+    toc_depth: 4
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+params:
+  date: !r Sys.Date()
+---
+
+<style>
+h1 {
+  color: Orange ;
+}
+h2, h3, h4, h5, h6, legend {
+  color: Indigo ;
+}
+p {
+  line-height:170%;
+}
+{
+sidebar h2 {
+  background-color: Indigo;
+}
+code {
+  color: Indigo ;
+}
+.exercise {
+  color: #824b00;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
+                      dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1)
+Sys.setlocale("LC_TIME", "C")
+```
+
+
+# PCA
+
+
+```{r}
+data_year <- 2023 ## set at the beginning - set to 9999 if data_years are combined
+suffix_for_plot <- "_PCA_"
+
+source(here::here('R','source-file-with-helper-functions.R'))
+```
+
+
+## Load data
+
+
+```{r}
+str(myenv)
+str(ab_aves)
+
+```
+
+
+## Create master table
+
+Birds
+```{r}
+#### env vars and aves spec across locations
+
+names(ab_aves) ## 66 bird species - focus on the abundant ones - if at least 1 bird present
+ab_aves_floor <- floor(ab_aves[c(2:dim(ab_aves)[2])])
+
+
+aves_to_remove <- which(colSums(ab_aves_floor) == 0) 
+length(aves_to_remove) #remove 33 of 66
+names(aves_to_remove)
+
+master_aves_red <- ab_aves_floor[,-which(names(ab_aves_floor) %in% names(aves_to_remove))]
+master_aves <-cbind(ab_aves$Site,master_aves_red )
+head(master_aves)
+
+names(master_aves_tmp)[names(master_aves_tmp) == 'ab_aves$Site'] <- 'site'
+master_aves <- master_aves_tmp
+
+ft <- flextable(master_aves)
+save_as_docx(ft, path =  paste0(dir_output_path,
+                    "/ft_aves_spec_per_location_modelled_reduced",suffix_for_plot,today,".docx"))
+```
+
+Environment, climate and mosquito abundance
+```{r}
+com <- merge(myenv, master_aves, by = "site")
+```
+
+
+
+```{r}
+
+com
+## in case there are factors/characters in the data
+#which(names(com) == 'Site')
+
+subset_for_analysis <- com[,-1]
+data_normalized <- scale(subset_for_analysis) ## with bird_ab bird_div...explains less!
+
+head(data_normalized)
+#corr_matrix <- cor(data_normalized)
+
+a <- which(is.na(data_normalized)) ##i fsame amount of birds present, variance is 0
+col_pos <- which(colnames(data_normalized) == "Phoenicurus_phoenicurus")
+data_normalized_b <- data_normalized[,-col_pos]
+data_normalized <- data_normalized_b
+
+
+## use this:
+## based on scaled data, but not cor
+data.pca <- prcomp(data_normalized, center = TRUE, scale. = TRUE)
+
+summary(data.pca)
+
+## continue here
+data.pca$rotation  # Shows loadings
+## Loadings of variables on each principal component
+#loadings <- data.pca$rotation
+#print(loadings)
+
+## Get the loadings for PC1
+#loadings_PC1 <- loadings[, 1]
+#print(loadings_PC1)
+# Scores of data points in the new PCA space
+scores <- data.pca$x
+print(head(scores))
+
+## Get scores for the first two principal components
+scores_PC1_PC2 <- scores[, 1:2]
+print(scores_PC1_PC2)
+
+# Compute eigenvalues
+eigenvalues <- (data.pca$sdev)^2
+eigenvalues
+
+## -----scree plot-----
+# Data for scree plot
+scree_data <- data.frame(
+  Component = 1:length(eigenvalues),
+  Eigenvalue = eigenvalues)
+
+# ggplot scree plot
+ggplot(scree_data, aes(x = Component, y = Eigenvalue)) +
+  geom_point(size = 3, color = "blue") +
+  geom_line(color = "blue") +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
+  labs(title = "Scree Plot", x = "Principal Component", 
+       y = "Eigenvalue") 
+
+## scree plot - similarly nice
+#fviz_eig(data.pca, addlabels = TRUE)
+
+# Retain components with eigenvalues > 1
+components_to_retain <- sum(eigenvalues > 1)
+components_to_retain
+# Project the data onto the principal components
+pc_scores <- data.pca$x
+
+# Subset the retained components
+pc_reduced <- pc_scores[, 1:components_to_retain]
+data.pca$rotation  # Loadings
+
+variance_explained <- round(eigenvalues / sum(eigenvalues) * 100, digits= 2)
+cumulative_variance <- cumsum(variance_explained)
+
+# Combine into a data frame for interpretation
+results <- data.frame(
+  PC = 1:length(eigenvalues),
+  Eigenvalue = eigenvalues,
+  Variance_Explained = variance_explained,
+  Cumulative_Variance = cumulative_variance
+)
+print(results)
+
+```
+
+## PCA plot
+### Fig 7 
+```{r}
+## Biplot using factoextra
+## ind is related to the rows, 
+## and the numbering is according to rownames, 2= rotha... (see below)
+rownames(com)  ## "2"   "4" "1"  "3"  "5"
+com$site       ## "RB" "RA" "S"  "C"  "N" 
+
+  p <- fviz_pca_biplot(data.pca, 
+                repel = TRUE,  
+                col.var = "cos2", gradient.cols = c("grey", "blue", "red"),  ## arrows
+                col.ind = "orange" ,
+                pointshape = 19, pointsize = 7, alpha.ind=0.8,
+               # addEllipses = TRUE, label = "var", mean.point = FALSE,
+               # ellipse.type = 'confidence', ellipse.level=0.7,
+                legend.title = "cos2" ) 
+  
+  
+  p$layers[[1]]$data$name <- factor(com$site)
+  p$layers[[1]]$mapping <- aes(x, y, colour = site.cols, shape = name) ##TODO why doesn't it take the names???
+  p$layers[[1]]$aes_params$size <- 5
+  p <- p + labs(shape = 'site')
+  p
+
+
+## save
+pdf(file = paste0(dir_plot_path,"/Fig7_pca_envcom_wSites_",data_year,suffix_for_plot,today,".pdf"),
+                  width = 12, height = 8)
+  p
+dev.off()
+
+## TODO how can I add my colour to the sites?
+  #  scale_fill_manual(values = site.col)
+# scale_colour_manual(values = site.col)
+
+```
+
+
+### Fig S2
+
+```{r}
+fviz_cos2(data.pca, choice = "var", axes = 1:2)
+
+## save plots
+pdf(file = paste0(dir_plot_path,"/Fig_S2_pca_envcom_cos2_",data_year,suffix_for_plot,today,".pdf"),
+                  width = 12, height = 8)
+  fviz_cos2(data.pca, choice = "var", axes = 1:2)
+dev.off()
+
+```
+
+
+
+
+
+
+<br><hr><br>
+
+<details><summary>Session Info</summary>
+
+```{r sessionInfo}
+Sys.time()
+#git2r::repository() ## uncomment if you are using GitHub
+sessionInfo()
+```
+
+</details>
+
+
+

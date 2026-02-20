@@ -88,7 +88,7 @@ today <- Sys.Date()
 today
 
 #data_year <- 2023 ## set at the beginning
-data_year <- 2024 ## set at the beginning
+data_year <- 9999 ## set at the beginning
 
 ## create output directory with most recent analysis results
 dir_output_path <- here('output', paste0('BUAdata_',data_year,'_analysisDate_',today) )
@@ -123,9 +123,16 @@ if (data_year == 2023) {
                     sep = ",", quote = "\"'", dec = ".", header = TRUE)
   head(mydat)
   str(mydat)
-  ## TODO ugly that first column = the rownames - how to suppress that?
+  ## TODO ugly that first column = the rownames - how to suppress that? not visible in editor
   mydat <- mydat[, -1]
-}
+  
+  
+   myclim <- read.table(here("data",
+                         "BE23_BUA_correlation_data20260218.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+
+  
+} else
 
 
 
@@ -134,8 +141,38 @@ if (data_year == 2024) {
 
   mydat <- read.table(here("data", "2024_data_mosquitoes_20260109.csv"), 
                     sep = ",", quote = "\"'", dec = ".", header = TRUE)
+  
+  myclim <- read.table(here("data",  
+                         "BE24_BUA_correlation_data20260218.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
 
 }
+
+if (data_year == 9999) {
+
+  mydat <- read.table(here("data",  
+                         "9999_data_mosquitoes_20260219.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+  
+  myclim <- read.table(here("data",  
+                         "BE23-24_BUA_correlation_data20260218.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+  myclim <- myclim[, c(1:18)]
+  
+  write.table(x = myclim, 
+              file = here("data","9999_clim.csv"),
+              sep = "\t",
+              row.names = FALSE,
+              col.names = TRUE)
+  
+  
+   myclim <- read.table(here("data",  
+                         "9999_clim.csv"), 
+                    sep = "\t", quote = "\"'", dec = ",", header = TRUE)
+ 
+
+}
+
 
 
 ##### -----------------environmental variables        -----------  #####
@@ -155,6 +192,99 @@ ab_aves <- read.table(here("data", "bird_abundance_per_site_modelled.csv"),
 ## TODO - retreieve temp+hum values now
 
 ```
+
+
+
+### TODO: put loading of all files into the helper functions 
+
+
+### TODO - merge with above
+```{r, eval = FALSE}
+##### -----------------       2023      ------------------------------  #####
+
+if (data_year == 2023) {
+
+  mydat <- read.table(here("data", "2023_data_mosquitoes_20240313.csv"), 
+                    sep = ",", quote = "\"'", dec = ".", header = TRUE)
+  head(mydat)
+  str(mydat)
+  mydat <- mydat[, -1] ## first column contained 
+  
+  
+      myenv <- read.table(here("data",  
+                         "BE23_BUA_correlation_data20260218.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+      myenv <- myenv[, c(1:18)]
+  
+  
+ } else
+
+
+
+  ## ------------------------   2024      ------------------------------- ###
+  if (data_year == 2024) {
+
+    mydat <- read.table(here("data", "2024_data_mosquitoes_20260109.csv"), 
+                    sep = ",", quote = "\"'", dec = ".", header = TRUE)
+    
+    
+      myenv <- read.table(here("data",  
+                         "BE24_BUA_correlation_data20260218.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+      myenv <- myenv[, c(1:18)]
+   
+    
+    
+
+  } else {
+    
+      ## ------------------------   2023 and 2024      ----------------------###
+
+      mydat <- read.table(here("data",  
+                         "9999_data_mosquitoes_20260219.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+      mydat <- mydat[, -c(37:39)] ##TODO delete the last three cols
+      
+      
+      myenv <- read.table(here("data",  
+                         "BE23-24_BUA_correlation_data20260218.csv"), 
+                    sep = ";", quote = "\"'", dec = ",", header = TRUE)
+      myenv <- myenv[, c(1:18)]
+
+
+  }
+
+
+
+##### -----------------modelled bird abundances      -----------  #####
+## Planillo et al. 2021 Div Dist
+ab_aves <- read.table(here("data", "bird_abundance_per_site_modelled.csv"), 
+                    sep = ",", quote = "\"'", dec = ".", header = TRUE)
+
+
+
+## TODO clean code like this
+
+ mymosq <- mymosq[, -1] ## first column contained 
+  names(mymosq)[names(mymosq) == 'Sampling_site'] <- 'site'
+  
+
+  
+  write.table(x = mymosq, 
+              file = here("data","2023_data_mosquitoes_20240313.csv"),
+              sep = "\t",
+              row.names = FALSE,
+              col.names = TRUE)
+
+```
+
+
+
+
+
+
+
+
 
 ## Prepare data set for rarefaction
 

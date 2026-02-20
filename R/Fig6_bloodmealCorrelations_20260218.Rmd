@@ -42,67 +42,23 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
 Sys.setlocale("LC_TIME", "C")
 ```
 
-# Preparation
 
-## Load helpful stuff 
-```{r}
-#devtools::install_github("EcoDynIZW/d6")
-library(d6)
-#d6::install_d6_packages(geo = TRUE)
-library(remotes)
+# Bloodmeal correlations
 
-library(here) ;here()
-library(tidyverse)
-library(tidyr)
-
-## plot helpers
-library(patchwork)
-library(ggplot2)
-library(gridExtra)
-library(viridis)
-library(flextable)
-
-## additional libraries:
-library(lubridate)
-library(vroom)
-library(readxl)
-
-## analysis
-library(iNEXT)
-library(vegan)
-library(pheatmap)
-library(ggcorrplot)
-
-library(modelr)
-library(GGally)
-library(ggrepel)
-```
-
-## Set themes
+## Settings
 
 ```{r}
-theme_set(theme_bw(base_size = 18))
-# theme_set(d6::theme_d6()) ##does not always work
+data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combined
+suffix_for_plot <- "_bloodmeal_"
 
-today <- Sys.Date()
-today
+source(here::here('R','source-file-with-helper-functions.R'))
 ```
 
-
-# START HERE
 
 ## Load cleaned data
 ```{r}
-data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combined
-
-source(here::here('R','source-file-with-helper-functions.R'))
-
-
-suffix_for_plot <- "_bloodmeal_"
-
-
 if (data_year == 2023) {
-  mydat <- read.table(here("data_raw", "CorinnaPatzinaMehling_2023_2024", 
+  mydat <- read.table(here("data",
                          "BE23_BUA_correlation_data20260218.csv"), 
                     sep = ";", quote = "\"'", dec = ",", header = TRUE)
 
@@ -116,12 +72,12 @@ if (data_year == 2023) {
 } else
   if (data_year == 2024) {
     
-    mydat <- read.table(here("data_raw", "CorinnaPatzinaMehling_2023_2024", 
+    mydat <- read.table(here("data",  
                          "BE24_BUA_correlation_data20260218.csv"), 
                     sep = ";", quote = "\"'", dec = ",", header = TRUE)
   } else { 
       
-      mydat <- read.table(here("data_raw", "CorinnaPatzinaMehling_2023_2024", 
+      mydat <- read.table(here("data",  
                          "BE23-24_BUA_correlation_data20260218.csv"), 
                     sep = ";", quote = "\"'", dec = ",", header = TRUE)
       }
@@ -136,7 +92,7 @@ str(mydat)
 
 ```{r}
 
-num_df <- mydat[,-1] ## delete the non-numeric site variable
+num_df <- myenv[,-1] ## delete the non-numeric site variable
 
 ## check if there are variance issues - TODO - geht sicher in einer Zeile!
 ## only concerns 2024 data
@@ -156,7 +112,9 @@ if (length(a) > 0){
 cor_mat <- cor(tmp3, method = "kendall", use = "pairwise.complete.obs")
 
 
-pdf(file = paste0(here('plots'),"/",data_year,"/corr_envs_kendall_",data_year,suffix_for_plot,today,".pdf"),
+### TODO - there are warnings about the aesthetics
+pdf(file = paste0(paste0(dir_plot_path,"/corr_envs_kendall_",
+                  data_year,suffix_for_plot,today,".pdf")),
                   width = 20, height = 25)
 
   ggcorrplot(cor_mat,
