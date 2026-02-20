@@ -94,6 +94,10 @@ today
 ## Load cleaned data
 ```{r}
 data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combined
+
+source(here::here('R','source-file-with-helper-functions.R'))
+
+
 suffix_for_plot <- "_bloodmeal_"
 
 
