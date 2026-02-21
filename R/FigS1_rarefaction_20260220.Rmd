@@ -48,7 +48,7 @@ Sys.setlocale("LC_TIME", "C")
 ## Settings
 
 ```{r}
-data_year <- 2023 ## set at the beginning - set to 9999 if data_years are combined
+data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combined
 suffix_for_plot <- "_mosquito-data_"
 
 source(here::here('R','source-file-with-helper-functions.R'))
