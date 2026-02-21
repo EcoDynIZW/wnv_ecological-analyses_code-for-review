@@ -198,7 +198,7 @@ ab_aves <- read.table(here("data", "bird_abundance_per_site_modelled.csv"),
 ### TODO: put loading of all files into the helper functions 
 
 
-### TODO - merge with above
+### TODO - merge with above - this is chaos now and eval = F
 ```{r, eval = FALSE}
 ##### -----------------       2023      ------------------------------  #####
 

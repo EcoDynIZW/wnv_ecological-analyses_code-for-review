@@ -43,13 +43,13 @@ Sys.setlocale("LC_TIME", "C")
 ```
 
 
-# Bloodmeal correlations
+# Analysis of mosquito data
 
 ## Settings
 
 ```{r}
 data_year <- 2023 ## set at the beginning - set to 9999 if data_years are combined
-suffix_for_plot <- "_mosq_rarefaction_"
+suffix_for_plot <- "_mosquito-data_"
 
 source(here::here('R','source-file-with-helper-functions.R'))
 
@@ -62,13 +62,13 @@ str(mymosq)
 ### Separate mosquitoes into sus and inf
 ```{r}
 
-
+## copy dataset
 tmp <- mymosq
 
-## TODO to discuss because just 1 day; does not matter for rarefaction
+## delete 19th of June in 2023 data set
 myrow <- which(tmp$Date == '2023-06-19')
 myrow
-if (length(myrow) > 0) {tmp[-myrow,] } 
+if (length(myrow) > 0) {tmp <- tmp[-myrow,] } 
 
 ## delete column of unidentifieds
 a1 <- which(names(tmp) == "AB_unidentified")
@@ -77,42 +77,380 @@ tmp1 <- tmp[, -c(a1,a2)]
 
 ## select only the columns with mosquitoes
 i <- grep("AB_", names(tmp1) )
-length(i) ## this is mosquito diversity across all sites
+length(i)                ## this is mosquito diversity across all sites
 ab_mosq <- tmp1[,c(1,i)]
 
 ## select only the columns with infected
 j <- grep("WNV_", names(tmp1) )
-length(j) ## this is infected mosquito diversity across all sites
+length(j)             ## this is infected mosquito diversity across all sites
 ab_mosq_wnv <- tmp1[,c(1,j)]
+
+
+## ab_mosq and ab_mosq_wnv used for further analyses
 
 ```
 
-### Create lists for rarefaction 
+### Create lists with colSums
 ```{r}
 
 AB_mosq_site <- tapply(ab_mosq[,-1], ab_mosq$site, colSums ) ## first column needs to be taken out
 AB_wnv_site <- tapply(ab_mosq_wnv[,-1], ab_mosq_wnv$site, colSums ) 
 
 ### continue here
-AB_mosq_test <- list('RB' = unname(AB_mosq_site$RB),
+AB_mosq_list <- list('RB' = unname(AB_mosq_site$RB),
                      'RA' = unname(AB_mosq_site$RA),
                      'S' = unname(AB_mosq_site$S),
                      'C' = unname(AB_mosq_site$C),
                      'N' = unname(AB_mosq_site$N)
                      )
-AB_mosq_test
+AB_mosq_list
+
+
+AB_wnv_list <- list('RB' = unname(AB_wnv_site$RB),
+                     'RA' = unname(AB_wnv_site$RA),
+                     'S' = unname(AB_wnv_site$S),
+                     'C' = unname(AB_wnv_site$C),
+                     'N' = unname(AB_wnv_site$N)
+                     )
+AB_wnv_list
+
+```
+
+## Calculate MIR
+
+### MIR per site
+```{r}
+MIR_rb <- round(sum(AB_wnv_list$RB) / sum(AB_mosq_list$RB) * 1000 , digits=2); MIR_rb
+MIR_ra <- round(sum(AB_wnv_list$RA) / sum(AB_mosq_list$RA) * 1000 , digits=2); MIR_ra
+MIR_s <- round(sum(AB_wnv_list$S) / sum(AB_mosq_list$S) * 1000 , digits=2); MIR_s
+MIR_c <- round(sum(AB_wnv_list$C) / sum(AB_mosq_list$C) * 1000 , digits=2); MIR_c
+MIR_n <- round(sum(AB_wnv_list$N) / sum(AB_mosq_list$N) * 1000 , digits=2); MIR_n
+
+## MIR changes in C if not only Culex is considered, 
+## infection in A vexans, but only 1 of 20 - neglected because it does not
+## reflect the processes in the field
+```
+
+### MIR per site and species
+```{r}
+if (data_year != 2024) {
+
+  wnv_inf_spec <- gsub(pattern = "WNV_", replacement = "",x= names(ab_mosq_wnv))
+  ab_mosq_spec <- gsub(pattern = "AB_" , replacement = "",x= names(ab_mosq))
+  
+  a <- which(ab_mosq_spec %in% wnv_inf_spec)
+  ab_mosq_spec_with_inf <- ab_mosq[,a]
+  
+  aa <- tapply(ab_mosq_spec_with_inf[,-1],ab_mosq_spec_with_inf$site, colSums)
+  
+  
+  
+  ab_inf_spec <- c("AB_Culex_pipiens_spp","AB_Culex_spp" ,"AB_Aedes_vexans","AB_Anopheles_plumbeus")
+ ## TODO again coded with hard wired numbers
+  ab_rb <- RB[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  ab_ra <- RA[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  ab_s <- S[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  ab_c <- C[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  ab_n <- N[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
+  
+  totsum_rb <- colSums(ab_rb)
+  totsum_ra <- colSums(ab_ra)
+  totsum_s <- colSums(ab_s)
+  totsum_c <- colSums(ab_c)
+  totsum_n <- colSums(ab_n)
+  
+AB_mosq_infected <- rbind(totsum_rb,totsum_ra,totsum_s,totsum_c,totsum_n) 
+rownames(AB_mosq_infected) <- c("RB","RA", "S","C","N")
+
+AB_wnv_beta_rel <- AB_wnv_beta ## make copy
+
+AB_wnv_beta_rel[1,] <- round(AB_wnv_beta[1,] / totsum_rb * 1000, digits = 2)
+AB_wnv_beta_rel[2,] <- round(AB_wnv_beta[2,] / totsum_ra * 1000, digits = 2)
+AB_wnv_beta_rel[3,] <- round(AB_wnv_beta[3,] / totsum_s * 1000, digits = 2)
+AB_wnv_beta_rel[4,] <- round(AB_wnv_beta[4,] / totsum_c * 1000, digits = 2)
+AB_wnv_beta_rel[5,] <- round(AB_wnv_beta[5,] / totsum_n * 1000, digits = 2)
+
+AB_wnv_beta_rel
+ft <- flextable(AB_wnv_beta_rel)
+save_as_docx(ft, path =  paste0(dir_output_path,
+                    "/ft_wnv_mir_per_species",suffix_for_plot,today,".docx"))
+}
+
 ```
 
 
 ## Rarefaction mosquitoes
+
+### Fig S1
 ```{r}
-mosq_div0 <- iNEXT(AB_mosq_test, q=0, datatype="abundance") 
+mosq_div0 <- iNEXT(AB_mosq_list, q=0, datatype="abundance") 
+
 mosq_div0$AsyEst ## save this output
 write.csv(x = mosq_div0$AsyEst, 
    file = paste0(dir_output_path,"/Rarefaction_mosq",
             suffix_for_plot,today,".csv"))
 
+
+#### Hill q = 0 ; richness/ diversity
+## TODO re-level legend to have RB RA S C N
+g0 <- ggiNEXT(mosq_div0, type=1, se=TRUE, facet.var="None",
+              color.var="Assemblage", 
+              grey=FALSE) +
+       scale_colour_manual(values = site.cols) +
+       scale_fill_manual(values = site.cols) +
+       ylab('Diversity of mosquito species') + 
+       xlab('Number of mosquitoes')
+g0
+
+pdf(paste0(dir_plot_path,"/Fig_S1_rarefaction_mosq_q0_",data_year,suffix_for_plot,today,".pdf"), 
+      width = 10, height = 10) 
+  grid.arrange(g0, ncol=1)
+dev.off()
+
+
 ```
+
+
+### Fig Shannon- and Simpson-like
+
+```{r}
+#### Hill q = 1 ; Shannon like
+mosq_div1 <- iNEXT(AB_mosq_list, q=1, datatype="abundance")
+g1 <- ggiNEXT(mosq_div1, type=1, se=TRUE, facet.var="None",  color.var="Assemblage", 
+        grey=FALSE) +
+  theme(legend.position="right") +
+  ylab('Hill number  q = 1') +
+  guides(linetype=guide_legend(title="Method"), 
+        colour=guide_legend(title="Site"), 
+        fill=guide_legend(title="Site"), 
+        shape=guide_legend(title="Site")) +
+       scale_colour_manual(values = site.cols) +
+       scale_fill_manual(values = site.cols) +
+       xlab('Number of mosquitoes')
+
+g1
+
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q1_",data_year,suffix_for_plot,today,".pdf"), 
+      width = 10, height = 10) 
+  grid.arrange(g1, ncol=1)
+dev.off()
+
+
+#### Hill q = 2 ; Simpson like
+mosq_div2 <- iNEXT(AB_mosq_list, q=2, datatype="abundance")
+g2 <- ggiNEXT(mosq_div2, type=1, se=TRUE, facet.var="None", color.var="Assemblage", 
+        grey=FALSE) +
+  theme_bw(base_size = 18) +
+  theme(legend.position="right") +
+  ylab('Hill number  q = 2') +
+  guides(linetype=guide_legend(title="Method"), 
+        colour=guide_legend(title="Site"), 
+        fill=guide_legend(title="Site"), 
+        shape=guide_legend(title="Site")) +
+         scale_colour_manual(values = site.cols) +
+       scale_fill_manual(values = site.cols) +
+       xlab('Number of mosquitoes')
+g2
+
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q2_",data_year,suffix_for_plot,today,".pdf"), 
+      width = 10, height = 10) 
+  grid.arrange(g2, ncol=1)
+dev.off()
+```
+
+
+### Fig WNV infected
+
+```{r, eval=FALSE}
+## makes no sense for 2024 as there is no diversity in infected
+
+# if (lapply(AB_wnv_list, length)[1] > 1) { ## more elegant to avoid the year setting
+if (data_year != 2024) {
+wnv_div0 <- iNEXT(AB_wnv_list, q=0, datatype="abundance") 
+wnv_r <- ggiNEXT(wnv_div0, type=1, se=TRUE, facet.var="None",
+              color.var="Assemblage", grey=FALSE) + 
+  scale_colour_manual(values = site.cols) +
+  scale_fill_manual(values = site.cols) +
+  ylab('Diversity of WNV-infected mosquito species') + 
+  xlab('Number of samples')
+
+plot(wnv_r)
+
+pdf(paste0(dir_plot_path,"/Fig_rarefaction_wnv_q0_",data_year,suffix_for_plot,today,".pdf"), 
+      width = 10, height = 10) 
+  grid.arrange(wnv_r, ncol=1)
+dev.off()
+}
+```
+
+
+## Bray-Curtis similarity
+
+### BC for mosquitos
+
+```{r}
+AB_mosq_beta <- t(as.data.frame(AB_mosq_list))
+tmydf <- setNames(data.frame(t(mydf[,-1])), mydf[,1])
+
+
+BC_vegan_diss <- round(vegdist(AB_mosq_beta, method = 'bray'),digits=2)
+(BC_vegan_sim <- 1-BC_vegan_diss)
+
+## convert to data.frame to save it as table
+tmp1 <- as.matrix(BC_vegan_sim)
+tmp2 <- as.data.frame(tmp1,row.names=rownames(tmp1))
+tmp2$site <-rownames(tmp1) 
+#tmp2
+
+ft <- flextable(tmp2)
+save_as_docx(ft, path =  paste0(dir_output_path,
+             "/ft_AB_mosq_BrayCurtis_similarity",suffix_for_plot,today,".docx"))
+
+```
+
+### BC for WNV
+
+do not run this for 2024, but AB_wnv_beta needed for MIR
+
+```{r}
+AB_wnv_beta <- t(as.data.frame(AB_wnv_list))
+
+if(data_year != 2024){
+  BC_wnv_diss <- round(vegdist(AB_wnv_beta, method = 'bray'),digits=2)
+  (BC_wnv_sim <- 1-BC_wnv_diss) ## similarity
+
+  tmp1 <- as.matrix(BC_wnv_sim)
+  tmp2 <- as.data.frame(tmp1,row.names=rownames(tmp1))
+  tmp2$site <-rownames(tmp1) 
+  #tmp2
+    ft <- flextable(tmp2)
+    save_as_docx(ft, path =  paste0(dir_output_path,
+                    "/ft_wnv_abs_BrayCurtis_similarity",suffix_for_plot,today,".docx"))
+}
+
+```
+
+## Hierarchical cluster analysis
+
+Check association of mosquitoes. 
+
+
+### Fig 5A Mosquito abuncance (log)
+
+```{r}
+my_a <- data.matrix(AB_mosq_beta)
+
+## give back the mosquito names without AB in front
+dimnames(my_a) <- list(rownames(my_a),
+                       gsub(pattern="AB_",replacement = "",
+                            x = names(ab_mosq)[-1])) 
+
+my_a
+
+## take the log of the abundance and add 1 to avoid zero issue
+## zeros will stay 0, but we have to add to the 1 for the color scale
+## to avoid that o and 1 are coerced
+my_a_log <- log2(my_a+1)
+
+#create the breaks to draw 0 found in grey
+bk2 = unique(seq(0, round(max(my_a_log)), length=round(max(my_a_log))+1))
+  
+a <- which(my_a_log == 1)
+my_a_log[a] <- 1.1 ## trick to distinguish 0 from 1 in breaks
+
+#set different color vectors for each interval
+col1 = rep("lightgrey", 1) # set 0 to grey
+col2 <- inferno(round(max(my_a_log))+1)
+colors2 <- c(col1, col2)
+
+p_heat <- pheatmap(my_a_log, color=colors2, breaks=bk2, fontsize = 16) # logarithm!
+
+pdf(paste0(dir_plot_path,"/Fig_5A_heat_mosqAB_log_",data_year,suffix_for_plot,today,".pdf"), 
+      width = 12, height = 10) 
+  p_heat
+dev.off()
+```
+
+### Fig 5B Absolute values (wnv counts) of infected
+
+In 2024 only 1 infected species, so skip for 2024
+```{r}
+if (data_year != 2024) {
+  my_b <- data.matrix(AB_wnv_beta)
+
+  ## give back the infected mosquito names without WNV in front
+  dimnames(my_b) <- list(rownames(my_b),
+                       gsub(pattern="WNV_",replacement = "",
+                            x = names(ab_mosq_wnv)[-1])) 
+
+
+  my_b
+  
+  #create the breaks to draw 0 found in grey
+  bk2 = unique(seq(0, max(my_b), length=max(my_b)+1))
+  
+  a <- which(my_b == 1)
+  my_b[a] <- 1.1 ## trick to distinguish 0 from 1 in breaks
+
+  #set different color vectors for each interval
+  col1 = rep("lightgrey", 1) # set 0 to grey
+  col2 <- inferno(max(my_b)+1)
+  colors2 <- c(col1, col2)
+  
+  #draw heatmap
+  p_heat_wnv <- pheatmap(my_b, color=colors2, breaks=bk2, fontsize= 16) ##
+
+  pdf(paste0(dir_plot_path,"/Fig5B_heat_wnvAB_",data_year,suffix_for_plot,today,".pdf"), 
+      width = 10, height = 10) 
+    p_heat_wnv
+  dev.off()
+
+}
+
+```
+
+
+### Fig 5C Relative infection prob per relative mosq abundance
+
+makes no sense for 2024
+```{r}
+
+if (data_year != 2024) {
+## colour breaks / quantiles
+my_c <- data.matrix(AB_wnv_beta_rel)
+my_c 
+
+
+quantile_breaks <- function(xs, n = 10) {
+  breaks <- quantile(xs, probs = seq(0, 1, length.out = n))
+  breaks[!duplicated(breaks)]
+}
+mat_breaks <- quantile_breaks(my_c, n = 49)
+
+
+p_heat_wnv_rel <- pheatmap(mat = my_c, 
+                           color = inferno(length(mat_breaks) - 1),
+                           breaks= mat_breaks,
+                           fontsize=16) 
+p_heat_wnv_rel
+
+pdf(paste0(dir_plot_path,"/Fig_5C_heat_wnv_mir_",data_year,suffix_for_plot,today,".pdf"), 
+      width = 12, height = 10) 
+  p_heat_wnv_rel
+dev.off()
+
+}
+
+```
+
+
+
+
+
+
+
+
+
 
 
 
