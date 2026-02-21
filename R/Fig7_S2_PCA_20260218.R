@@ -1,53 +1,13 @@
----
-title: "PCA for WNS in mosquitoes in Berlin 2023 and 2024"
-author: "Steph Kramer kramer@izw-berlin.de"
-date: "`r Sys.setlocale('LC_TIME','C'); 
-        paste('Last Update', format(Sys.time(), '%B %e, %Y')) `"
-output:
-  rmdformats::readthedown:
-    highlight: kate
-    code_folding: show
-    toc_depth: 4
-    toc_float: true
-editor_options:
-  chunk_output_type: console
-params:
-  date: !r Sys.Date()
----
+params <-
+list(date = structure(20505, class = "Date"))
 
-<style>
-h1 {
-  color: Orange ;
-}
-h2, h3, h4, h5, h6, legend {
-  color: Indigo ;
-}
-p {
-  line-height:170%;
-}
-{
-sidebar h2 {
-  background-color: Indigo;
-}
-code {
-  color: Indigo ;
-}
-.exercise {
-  color: #824b00;
-}
-</style>
-
-```{r setup, include=FALSE}
+## ----setup, include=FALSE--------------------------------------------------------------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
                       dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1)
 Sys.setlocale("LC_TIME", "C")
-```
 
 
-# PCA
-
-
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------------
 
 if (FLAG_run == 0) {
  data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combined
@@ -56,27 +16,18 @@ if (FLAG_run == 0) {
 
 suffix_for_plot <- "_PCA_"
 
-```
 
 
-## Load data
-
-
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------------
 str(myenv)
 str(ab_aves)
-```
 
 
-## Create master table
-
-Birds
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------------
 #### env vars and aves spec across locations
 
 names(ab_aves) ## 66 bird species - focus on the abundant ones - if at least 1 bird present
-#ab_aves_floor <- floor(ab_aves[c(2:dim(ab_aves)[2])]) ## reduces 33
-ab_aves_floor <- round(ab_aves[c(2:dim(ab_aves)[2])], digits =0)  ## reduces 22
+ab_aves_floor <- floor(ab_aves[c(2:dim(ab_aves)[2])])
 
 
 aves_to_remove <- which(colSums(ab_aves_floor) == 0) 
@@ -91,16 +42,13 @@ names(master_aves)[1] <- 'site'
 ft <- flextable(master_aves)
 save_as_docx(ft, path =  paste0(dir_output_path,
                     "/ft_aves_spec_per_location_modelled_reduced",suffix_for_plot,today,".docx"))
-```
 
-Environment, climate and mosquito abundance
-```{r}
+
+## --------------------------------------------------------------------------------------------------------------------------------------
 com <- merge(myenv, master_aves, by="site")
-```
 
 
-## Run PCA 
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------------
 
 com
 ## in case there are factors/characters in the data
@@ -113,12 +61,10 @@ data_normalized <- scale(subset_for_analysis)
 
 ## TODO - there is a way to find out the colname without typing the birds name
 a <- which(is.na(data_normalized)) ## same amount of birds present, variance is 0
+col_pos <- which(colnames(data_normalized) == "Phoenicurus_phoenicurus")
+data_normalized_b <- data_normalized[,-col_pos]
+data_normalized <- data_normalized_b
 
-if (length(a) > 0){
-  col_pos <- which(colnames(data_normalized) == "Phoenicurus_phoenicurus") ## TODO not nice!
-  data_normalized_b <- data_normalized[,-col_pos]
-  data_normalized <- data_normalized_b
-}
 
 ## based on scaled data
 data.pca <- prcomp(data_normalized, center = TRUE, scale. = TRUE)
@@ -159,11 +105,9 @@ results <- data.frame(
 )
 print(results)
 
-```
 
-## PCA plot
-### Fig 7 
-```{r}
+
+## --------------------------------------------------------------------------------------------------------------------------------------
 ## Biplot using factoextra
 ## ind is related to the rows, 
 ## and the numbering is according to rownames
@@ -197,12 +141,9 @@ dev.off()
   #  scale_fill_manual(values = site.col)
 # scale_colour_manual(values = site.col)
 
-```
 
 
-### Fig S2
-
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------------
 fviz_cos2(data.pca, choice = "var", axes = 1:2)
 
 ## save plots
@@ -211,19 +152,10 @@ pdf(file = paste0(dir_plot_path,"/Fig_S2_pca_envcom_cos2_",data_year,suffix_for_
   fviz_cos2(data.pca, choice = "var", axes = 1:2)
 dev.off()
 
-```
 
-<br><hr><br>
 
-<details><summary>Session Info</summary>
-
-```{r sessionInfo}
+## ----sessionInfo-----------------------------------------------------------------------------------------------------------------------
 Sys.time()
 #git2r::repository() ## uncomment if you are using GitHub
 sessionInfo()
-```
-
-</details>
-
-
 

@@ -44,7 +44,7 @@ library(ggcorrplot)
 #install.packages("factoextra")
 library("factoextra")
 
-
+library(knitr)
 
 ################################################################################
 ## ---------------------------- Settings -------------------------------------##
@@ -54,7 +54,7 @@ library("factoextra")
 today <- Sys.Date()
 today
 
-## data_year should be set in main files
+## data_year should be set in main files or wrapper
 
 ## create output directory with most recent analysis results
 dir_output_path <- here('output', paste0('BUAdata_',data_year,'_analysisDate_',today) )

@@ -1,66 +1,21 @@
----
-title: "WNS bloodmeals in mosquitoes in Berlin 2023 and 2024"
-author: "Steph Kramer kramer@izw-berlin.de"
-date: "`r Sys.setlocale('LC_TIME','C'); paste('Last Update', format(Sys.time(), '%B %e, %Y')) `"
-output:
-  rmdformats::readthedown:
-    highlight: kate
-    code_folding: show
-    toc_depth: 4
-    toc_float: true
-editor_options:
-  chunk_output_type: console
-params:
-  date: !r Sys.Date()
----
+params <-
+list(date = structure(20505, class = "Date"))
 
-<style>
-h1 {
-  color: Orange ;
-}
-h2, h3, h4, h5, h6, legend {
-  color: Indigo ;
-}
-p {
-  line-height:170%;
-}
-{
-sidebar h2 {
-  background-color: Indigo;
-}
-code {
-  color: Indigo ;
-}
-.exercise {
-  color: #824b00;
-}
-</style>
-
-```{r setup, include=FALSE}
+## ----setup, include=FALSE--------------------------------------------------------------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
                       dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1)
 Sys.setlocale("LC_TIME", "C")
-```
 
 
-# Analysis of mosquito data
-
-## Settings
-
-```{r settings}
-# FLAG_run <- 0
+## ----settings--------------------------------------------------------------------------------------------------------------------------
 if (FLAG_run == 0) {
  data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combined
  source(here::here('R','source-file-with-helper-functions.R'))
 }
 suffix_for_plot <- "_community-metrics_"
-```
 
 
-## Prepare dataset
-
-### Separate mosquitoes into sus and inf
-```{r dataset-prep}
+## ----dataset-prep----------------------------------------------------------------------------------------------------------------------
 
 str(mymosq)
 #View(mymosq)
@@ -94,10 +49,9 @@ ab_mosq_wnv <- tmp1[,c(1,j)]
 
 ## ab_mosq and ab_mosq_wnv used for further analyses
 
-```
 
-### Create lists with colSums
-```{r dataset-prep2}
+
+## ----dataset-prep2---------------------------------------------------------------------------------------------------------------------
 
 AB_mosq_site <- tapply(ab_mosq[,-1], ab_mosq$site, colSums, na.rm=T ) ## first column needs to be taken out
 AB_mosq_list <- list('RB' = unname(AB_mosq_site$RB),
@@ -135,12 +89,9 @@ if (data_dim > 2 ) {
      
 }
     
-```
 
-## Calculate MIR
 
-### MIR per site
-```{r mir-per-site}
+## ----mir-per-site----------------------------------------------------------------------------------------------------------------------
 MIR_rb <- round(sum(AB_wnv_list$RB) / sum(AB_mosq_list$RB) * 1000 , digits=2); MIR_rb
 MIR_ra <- round(sum(AB_wnv_list$RA) / sum(AB_mosq_list$RA) * 1000 , digits=2); MIR_ra
 MIR_s <- round(sum(AB_wnv_list$S) / sum(AB_mosq_list$S) * 1000 , digits=2); MIR_s
@@ -150,10 +101,9 @@ MIR_n <- round(sum(AB_wnv_list$N) / sum(AB_mosq_list$N) * 1000 , digits=2); MIR_
 ## MIR changes in C if not only Culex is considered, 
 ## infection in A vexans, but only 1 of 20 - neglected because it does not
 ## reflect the processes in the field
-```
 
-### MIR per site and species
-```{r mir-per-spec-and-site}
+
+## ----mir-per-spec-and-site-------------------------------------------------------------------------------------------------------------
 if (data_year != 2024) {
 
   wnv_inf_spec <- gsub(pattern = "WNV_", replacement = "",x= names(ab_mosq_wnv))
@@ -182,13 +132,9 @@ if (data_year != 2024) {
                     suffix_for_plot,today,".docx"))
 }
 
-```
 
 
-## Rarefaction mosquitoes
-
-### Fig S1
-```{r raref-mosq-q0, warnings = FALSE}
+## ----raref-mosq-q0, warnings = FALSE---------------------------------------------------------------------------------------------------
 mosq_div0 <- iNEXT(AB_mosq_list, q=0, datatype="abundance") 
 
 mosq_div0$AsyEst ## save this output
@@ -214,12 +160,9 @@ pdf(paste0(dir_plot_path,"/Fig_S1_rarefaction_mosq_q0_",data_year,suffix_for_plo
 dev.off()
 
 
-```
 
 
-### Fig Shannon- and Simpson-like
-
-```{r raref-mosq-q12, warnings = FALSE}
+## ----raref-mosq-q12, warnings = FALSE--------------------------------------------------------------------------------------------------
 #### Hill q = 1 ; Shannon like
 mosq_div1 <- iNEXT(AB_mosq_list, q=1, datatype="abundance")
 g1 <- ggiNEXT(mosq_div1, type=1, se=TRUE, facet.var="None",  color.var="Assemblage", 
@@ -262,14 +205,9 @@ pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q2_",data_year,suffix_for_plot,t
       width = 10, height = 10) 
   grid.arrange(g2, ncol=1)
 dev.off()
-```
 
 
-### Fig WNV infected
-makes no sense for 2024 as there is no diversity in infected, 
-only infections in Culex
-
-```{r raref-wnv-q0, warnings = FALSE}
+## ----raref-wnv-q0, warnings = FALSE----------------------------------------------------------------------------------------------------
 
 # if (lapply(AB_wnv_list, length)[1] > 1) { ## more elegant to avoid the year setting
 if (data_year != 2024) {
@@ -288,31 +226,10 @@ pdf(paste0(dir_plot_path,"/Fig_rarefaction_wnv_q0_",data_year,suffix_for_plot,to
   grid.arrange(wnv_r, ncol=1)
 dev.off()
 }
-```
 
 
-## Bray-Curtis similarity
-
-### BC for mosquitos
-
-```{r bc-mosq, warnings = FALSE}
+## ----bc-mosq, warnings = FALSE---------------------------------------------------------------------------------------------------------
 AB_mosq_beta <- t(as.data.frame(AB_mosq_list))
-dimnames(AB_mosq_beta) <- list(rownames(AB_mosq_beta),
-                               gsub(pattern="AB_",replacement = "",
-                               x = names(ab_mosq)[-1])) 
-
-#class(AB_mosq_beta)
-
-## in case for PCA
-write.table(x = as.data.frame(AB_mosq_beta), 
-            file = paste0(here("data"),"/ab_mosq_spec_per_site_",data_year,".csv"),
-            sep= ";",
-            col.names = TRUE,
-            row.names = TRUE,
-            dec ="." )
-
-
-
 
 BC_vegan_diss <- round(vegdist(AB_mosq_beta, method = 'bray'),digits=2)
 (BC_vegan_sim <- 1-BC_vegan_diss)
@@ -327,28 +244,10 @@ ft <- flextable(tmp2)
 save_as_docx(ft, path =  paste0(dir_output_path,
              "/ft_AB_mosq_BrayCurtis_similarity_",data_year,suffix_for_plot,today,".docx"))
 
-```
 
-### BC for WNV abundance
 
-do not run this for 2024, but AB_wnv_beta needed for MIR
-
-```{r bc-mnv-ab, warnings = FALSE}
+## ----bc-mnv-ab, warnings = FALSE-------------------------------------------------------------------------------------------------------
 AB_wnv_beta <- t(as.data.frame(AB_wnv_list))
-  
-## give back the infected mosquito names without WNV in front
-dimnames(AB_wnv_beta) <- list(rownames(AB_wnv_beta),
-                            gsub(pattern="WNV_",replacement = "",
-                            x = names(ab_mosq_wnv)[-1])) 
-
-## in case for PCA
-write.table(x = as.data.frame(AB_wnv_beta), 
-            file = paste0(here("data"),"/ab_mosq_wnv_spec_per_site_",data_year,".csv"),
-            sep= ";",
-            col.names = TRUE,
-            row.names = TRUE,
-            dec ="." )
-
 
 if(data_year != 2024){
   BC_wnv_diss <- round(vegdist(AB_wnv_beta, method = 'bray'),digits=2)
@@ -363,13 +262,9 @@ if(data_year != 2024){
                     "/ft_wnv_abs_BrayCurtis_similarity_",data_year,suffix_for_plot,today,".docx"))
 }
 
-```
 
 
-### BC for MIR
-
-Not for 2024 data
-```{r bc-wnv-mir, warnings = FALSE}
+## ----bc-wnv-mir, warnings = FALSE------------------------------------------------------------------------------------------------------
 if (data_year != 2024) {
   AB_wnv_beta_rel <- t(as.data.frame(mir_site_spec)) ## see MIR per site and species
 
@@ -390,23 +285,17 @@ if (data_year != 2024) {
                     "/ft_wnv_mir_BrayCurtis_similarity_",data_year,suffix_for_plot,today,".docx"))
 }
 
-```
 
 
-
-
-
-## Hierarchical cluster analysis
-
-Check association of mosquitoes. 
-
-
-### Fig 5A Mosquito abuncance (log)
-
-```{r hc-mosq, warnings = FALSE}
+## ----hc-mosq, warnings = FALSE---------------------------------------------------------------------------------------------------------
 my_a <- data.matrix(AB_mosq_beta)
-my_a
 
+## give back the mosquito names without AB in front
+dimnames(my_a) <- list(rownames(my_a),
+                       gsub(pattern="AB_",replacement = "",
+                            x = names(ab_mosq)[-1])) 
+
+my_a
 
 ## take the log of the abundance and add 1 to avoid zero issue
 ## zeros will stay 0, but we have to add to the 1 for the color scale
@@ -430,18 +319,19 @@ pdf(paste0(dir_plot_path,"/Fig_5A_heat_mosqAB_log_",data_year,suffix_for_plot,to
       width = 12, height = 10) 
   p_heat
 dev.off()
-```
-
-### Fig 5B Absolute values (wnv counts) of infected
-
-In 2024 only 1 infected species, so skip for 2024
-```{r hc-wnv-ab, warnings = FALSE}
-print("Fig 5B") ## TODO - bug here that fig 5B is never saved
-dev.off() ## TODO is this the error?
 
 
+## ----hc-wnv-ab, warnings = FALSE-------------------------------------------------------------------------------------------------------
+print("Fig 5B")
 if (data_year != 2024) {
   my_b <- data.matrix(AB_wnv_beta)
+
+  ## give back the infected mosquito names without WNV in front
+  dimnames(my_b) <- list(rownames(my_b),
+                       gsub(pattern="WNV_",replacement = "",
+                            x = names(ab_mosq_wnv)[-1])) 
+
+
   my_b
   
   #create the breaks to draw 0 found in grey
@@ -457,7 +347,6 @@ if (data_year != 2024) {
   
   #draw heatmap
   p_heat_wnv <- pheatmap(my_b, color=colors2, breaks=bk2, fontsize= 16) ##
-  p_heat_wnv
 
   pdf(paste0(dir_plot_path,"/Fig_5B_heat_wnvAB_",data_year,suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
@@ -466,14 +355,9 @@ if (data_year != 2024) {
 
 }
 
-dev.off() ## TODO
-```
 
 
-### Fig Relative infection prob per relative mosq abundance
-
-Not for 2024
-```{r hc-wnv-mir, warnings = FALSE}
+## ----hc-wnv-mir, warnings = FALSE------------------------------------------------------------------------------------------------------
 
 if (data_year != 2024) {
 ## colour breaks / quantiles
@@ -494,27 +378,17 @@ p_heat_wnv_rel <- pheatmap(mat = my_c,
                            fontsize=16) 
 p_heat_wnv_rel
 
-pdf(paste0(dir_plot_path,"/Fig_heat_wnv_mir_",data_year,suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_5C_heat_wnv_mir_",data_year,suffix_for_plot,today,".pdf"), 
       width = 12, height = 10) 
   p_heat_wnv_rel
 dev.off()
 
 }
-dev.off()
-
-```
 
 
 
-
-<br><hr><br>
-
-<details><summary>Session Info</summary>
-
-```{r sessionInfo}
+## ----sessionInfo-----------------------------------------------------------------------------------------------------------------------
 Sys.time()
 #git2r::repository() ## uncomment if you are using GitHub
 sessionInfo()
-```
 
-</details>
