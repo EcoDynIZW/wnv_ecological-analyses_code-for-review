@@ -141,39 +141,24 @@ if (data_year != 2024) {
   a <- which(ab_mosq_spec %in% wnv_inf_spec)
   ab_mosq_spec_with_inf <- ab_mosq[,a]
   
-  aa <- tapply(ab_mosq_spec_with_inf[,-1],ab_mosq_spec_with_inf$site, colSums)
+  sum_mosq_spec_with_inf <- tapply(ab_mosq_spec_with_inf[,-1],
+                                  ab_mosq_spec_with_inf$site, 
+                                  colSums)
   
+  mir_site_spec = mapply(FUN = `/`, 
+                               AB_wnv_site, sum_mosq_spec_with_inf, 
+                               SIMPLIFY = FALSE)
   
+  mir_site_spec = mapply(FUN = function(val1) round(val1*1000, digits = 2), 
+                         mir_site_spec, 
+                         SIMPLIFY = FALSE)
   
-  ab_inf_spec <- c("AB_Culex_pipiens_spp","AB_Culex_spp" ,"AB_Aedes_vexans","AB_Anopheles_plumbeus")
- ## TODO again coded with hard wired numbers
-  ab_rb <- RB[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
-  ab_ra <- RA[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
-  ab_s <- S[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
-  ab_c <- C[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
-  ab_n <- N[, c(ab_inf_spec[1],ab_inf_spec[2],ab_inf_spec[3],ab_inf_spec[4])]
-  
-  totsum_rb <- colSums(ab_rb)
-  totsum_ra <- colSums(ab_ra)
-  totsum_s <- colSums(ab_s)
-  totsum_c <- colSums(ab_c)
-  totsum_n <- colSums(ab_n)
-  
-AB_mosq_infected <- rbind(totsum_rb,totsum_ra,totsum_s,totsum_c,totsum_n) 
-rownames(AB_mosq_infected) <- c("RB","RA", "S","C","N")
+  AB_wnv_beta_rel_as_df <- as.data.frame(mir_site_spec)
 
-AB_wnv_beta_rel <- AB_wnv_beta ## make copy
-
-AB_wnv_beta_rel[1,] <- round(AB_wnv_beta[1,] / totsum_rb * 1000, digits = 2)
-AB_wnv_beta_rel[2,] <- round(AB_wnv_beta[2,] / totsum_ra * 1000, digits = 2)
-AB_wnv_beta_rel[3,] <- round(AB_wnv_beta[3,] / totsum_s * 1000, digits = 2)
-AB_wnv_beta_rel[4,] <- round(AB_wnv_beta[4,] / totsum_c * 1000, digits = 2)
-AB_wnv_beta_rel[5,] <- round(AB_wnv_beta[5,] / totsum_n * 1000, digits = 2)
-
-AB_wnv_beta_rel
-ft <- flextable(AB_wnv_beta_rel)
-save_as_docx(ft, path =  paste0(dir_output_path,
-                    "/ft_wnv_mir_per_species",suffix_for_plot,today,".docx"))
+  ft <- flextable(AB_wnv_beta_rel_as_df)
+  save_as_docx(ft, path =  paste0(dir_output_path,
+                    "/ft_wnv_mir_per_speciesand site",
+                    suffix_for_plot,today,".docx"))
 }
 
 ```
@@ -308,7 +293,7 @@ save_as_docx(ft, path =  paste0(dir_output_path,
 
 ```
 
-### BC for WNV
+### BC for WNV abundance
 
 do not run this for 2024, but AB_wnv_beta needed for MIR
 
@@ -329,6 +314,37 @@ if(data_year != 2024){
 }
 
 ```
+
+
+### BC for MIR
+
+Not for 2024 data
+```{r}
+if (data_year != 2024) {
+  AB_wnv_beta_rel <- t(as.data.frame(mir_site_spec)) ## see MIR per site and species
+
+
+  BC_wnv_diss_rel <- round(vegdist(AB_wnv_beta_rel, method = 'bray'),digits=2)
+  BC_wnv_sim_rel <- 1-BC_wnv_diss_rel
+  BC_wnv_sim_rel #similarity
+
+  tmp1 <- as.matrix(BC_wnv_sim_rel)
+  tmp2 <- as.data.frame(tmp1,row.names=rownames(tmp1))
+  tmp2$site <-rownames(tmp1) 
+  #tmp2
+
+
+  ## this is similarity in infected species groups, not in total inf
+  ft <- flextable(tmp2)
+  save_as_docx(ft, path =  paste0(dir_output_path,
+                    "/ft_wnv_mir_BrayCurtis_similarity",suffix_for_plot,today,".docx"))
+}
+
+```
+
+
+
+
 
 ## Hierarchical cluster analysis
 
@@ -412,7 +428,7 @@ if (data_year != 2024) {
 
 ### Fig 5C Relative infection prob per relative mosq abundance
 
-makes no sense for 2024
+Not for 2024
 ```{r}
 
 if (data_year != 2024) {
@@ -442,18 +458,6 @@ dev.off()
 }
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
