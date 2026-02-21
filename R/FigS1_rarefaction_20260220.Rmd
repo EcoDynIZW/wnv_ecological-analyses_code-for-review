@@ -157,7 +157,7 @@ if (data_year != 2024) {
 
   ft <- flextable(AB_wnv_beta_rel_as_df)
   save_as_docx(ft, path =  paste0(dir_output_path,
-                    "/ft_wnv_mir_per_speciesand site",
+                    "/ft_wnv_mir_per_species_and_site",
                     suffix_for_plot,today,".docx"))
 }
 
@@ -247,7 +247,7 @@ dev.off()
 ### Fig WNV infected
 
 ```{r, eval=FALSE}
-## makes no sense for 2024 as there is no diversity in infected
+## makes no sense for 2024 as there is no diversity in infected, only inf in Culex
 
 # if (lapply(AB_wnv_list, length)[1] > 1) { ## more elegant to avoid the year setting
 if (data_year != 2024) {
@@ -275,8 +275,6 @@ dev.off()
 
 ```{r}
 AB_mosq_beta <- t(as.data.frame(AB_mosq_list))
-tmydf <- setNames(data.frame(t(mydf[,-1])), mydf[,1])
-
 
 BC_vegan_diss <- round(vegdist(AB_mosq_beta, method = 'bray'),digits=2)
 (BC_vegan_sim <- 1-BC_vegan_diss)
