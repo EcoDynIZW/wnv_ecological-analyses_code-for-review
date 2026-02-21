@@ -10,7 +10,7 @@ Sys.setlocale("LC_TIME", "C")
 ## --------------------------------------------------------------------------------------------------------------------------------------
 
 if (FLAG_run == 0) {
- data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combined
+ data_year <- 2023 ## set at the beginning - set to 9999 if data_years are combined
  source(here::here('R','source-file-with-helper-functions.R'))
 }
 suffix_for_plot <- "_bloodmeal_"
@@ -52,7 +52,7 @@ cor_p
 
 
 ### TODO - there are warnings about the aesthetics
-pdf(file = paste0(paste0(dir_plot_path,"/corr_envs_kendall_",
+pdf(file = paste0(paste0(dir_plot_path,"/Fig_6_corr_envs_kendall_",
                   data_year,suffix_for_plot,today,".pdf")),
                   width = 20, height = 25)
   cor_p

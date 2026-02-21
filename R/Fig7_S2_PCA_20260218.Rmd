@@ -75,8 +75,9 @@ Birds
 #### env vars and aves spec across locations
 
 names(ab_aves) ## 66 bird species - focus on the abundant ones - if at least 1 bird present
+ab_aves$site  ## take care - different sequence now, not sorted alphabetically
 #ab_aves_floor <- floor(ab_aves[c(2:dim(ab_aves)[2])]) ## reduces 33
-ab_aves_floor <- round(ab_aves[c(2:dim(ab_aves)[2])], digits =0)  ## reduces 22
+ab_aves_floor <- round(ab_aves[c(2:dim(ab_aves)[2])], digits =0)  ## reduces 24
 
 
 aves_to_remove <- which(colSums(ab_aves_floor) == 0) 
@@ -95,7 +96,7 @@ save_as_docx(ft, path =  paste0(dir_output_path,
 
 Environment, climate and mosquito abundance
 ```{r}
-com <- merge(myenv, master_aves, by="site")
+com <- merge(myenv, master_aves, by="site") ## merge! by site
 ```
 
 

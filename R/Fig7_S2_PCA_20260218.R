@@ -27,7 +27,8 @@ str(ab_aves)
 #### env vars and aves spec across locations
 
 names(ab_aves) ## 66 bird species - focus on the abundant ones - if at least 1 bird present
-ab_aves_floor <- floor(ab_aves[c(2:dim(ab_aves)[2])])
+#ab_aves_floor <- floor(ab_aves[c(2:dim(ab_aves)[2])]) ## reduces 33
+ab_aves_floor <- round(ab_aves[c(2:dim(ab_aves)[2])], digits =0)  ## reduces 22
 
 
 aves_to_remove <- which(colSums(ab_aves_floor) == 0) 
@@ -61,10 +62,12 @@ data_normalized <- scale(subset_for_analysis)
 
 ## TODO - there is a way to find out the colname without typing the birds name
 a <- which(is.na(data_normalized)) ## same amount of birds present, variance is 0
-col_pos <- which(colnames(data_normalized) == "Phoenicurus_phoenicurus")
-data_normalized_b <- data_normalized[,-col_pos]
-data_normalized <- data_normalized_b
 
+if (length(a) > 0){
+  col_pos <- which(colnames(data_normalized) == "Phoenicurus_phoenicurus") ## TODO not nice!
+  data_normalized_b <- data_normalized[,-col_pos]
+  data_normalized <- data_normalized_b
+}
 
 ## based on scaled data
 data.pca <- prcomp(data_normalized, center = TRUE, scale. = TRUE)

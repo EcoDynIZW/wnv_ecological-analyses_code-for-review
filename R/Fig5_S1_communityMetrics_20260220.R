@@ -8,6 +8,7 @@ Sys.setlocale("LC_TIME", "C")
 
 
 ## ----settings--------------------------------------------------------------------------------------------------------------------------
+# FLAG_run <- 0
 if (FLAG_run == 0) {
  data_year <- 9999 ## set at the beginning - set to 9999 if data_years are combined
  source(here::here('R','source-file-with-helper-functions.R'))
@@ -230,6 +231,22 @@ dev.off()
 
 ## ----bc-mosq, warnings = FALSE---------------------------------------------------------------------------------------------------------
 AB_mosq_beta <- t(as.data.frame(AB_mosq_list))
+dimnames(AB_mosq_beta) <- list(rownames(AB_mosq_beta),
+                               gsub(pattern="AB_",replacement = "",
+                               x = names(ab_mosq)[-1])) 
+
+#class(AB_mosq_beta)
+
+## in case for PCA
+write.table(x = as.data.frame(AB_mosq_beta), 
+            file = paste0(here("data"),"/ab_mosq_spec_per_site_",data_year,".csv"),
+            sep= ";",
+            col.names = TRUE,
+            row.names = TRUE,
+            dec ="." )
+
+
+
 
 BC_vegan_diss <- round(vegdist(AB_mosq_beta, method = 'bray'),digits=2)
 (BC_vegan_sim <- 1-BC_vegan_diss)
@@ -248,6 +265,20 @@ save_as_docx(ft, path =  paste0(dir_output_path,
 
 ## ----bc-mnv-ab, warnings = FALSE-------------------------------------------------------------------------------------------------------
 AB_wnv_beta <- t(as.data.frame(AB_wnv_list))
+  
+## give back the infected mosquito names without WNV in front
+dimnames(AB_wnv_beta) <- list(rownames(AB_wnv_beta),
+                            gsub(pattern="WNV_",replacement = "",
+                            x = names(ab_mosq_wnv)[-1])) 
+
+## in case for PCA
+write.table(x = as.data.frame(AB_wnv_beta), 
+            file = paste0(here("data"),"/ab_mosq_wnv_spec_per_site_",data_year,".csv"),
+            sep= ";",
+            col.names = TRUE,
+            row.names = TRUE,
+            dec ="." )
+
 
 if(data_year != 2024){
   BC_wnv_diss <- round(vegdist(AB_wnv_beta, method = 'bray'),digits=2)
@@ -289,13 +320,8 @@ if (data_year != 2024) {
 
 ## ----hc-mosq, warnings = FALSE---------------------------------------------------------------------------------------------------------
 my_a <- data.matrix(AB_mosq_beta)
-
-## give back the mosquito names without AB in front
-dimnames(my_a) <- list(rownames(my_a),
-                       gsub(pattern="AB_",replacement = "",
-                            x = names(ab_mosq)[-1])) 
-
 my_a
+
 
 ## take the log of the abundance and add 1 to avoid zero issue
 ## zeros will stay 0, but we have to add to the 1 for the color scale
@@ -322,16 +348,12 @@ dev.off()
 
 
 ## ----hc-wnv-ab, warnings = FALSE-------------------------------------------------------------------------------------------------------
-print("Fig 5B")
+print("Fig 5B") ## TODO - bug here that fig 5B is never saved
+dev.off() ## TODO is this the error?
+
+
 if (data_year != 2024) {
   my_b <- data.matrix(AB_wnv_beta)
-
-  ## give back the infected mosquito names without WNV in front
-  dimnames(my_b) <- list(rownames(my_b),
-                       gsub(pattern="WNV_",replacement = "",
-                            x = names(ab_mosq_wnv)[-1])) 
-
-
   my_b
   
   #create the breaks to draw 0 found in grey
@@ -347,6 +369,7 @@ if (data_year != 2024) {
   
   #draw heatmap
   p_heat_wnv <- pheatmap(my_b, color=colors2, breaks=bk2, fontsize= 16) ##
+  p_heat_wnv
 
   pdf(paste0(dir_plot_path,"/Fig_5B_heat_wnvAB_",data_year,suffix_for_plot,today,".pdf"), 
       width = 10, height = 10) 
@@ -355,6 +378,7 @@ if (data_year != 2024) {
 
 }
 
+dev.off() ## TODO
 
 
 ## ----hc-wnv-mir, warnings = FALSE------------------------------------------------------------------------------------------------------
@@ -378,12 +402,13 @@ p_heat_wnv_rel <- pheatmap(mat = my_c,
                            fontsize=16) 
 p_heat_wnv_rel
 
-pdf(paste0(dir_plot_path,"/Fig_5C_heat_wnv_mir_",data_year,suffix_for_plot,today,".pdf"), 
+pdf(paste0(dir_plot_path,"/Fig_heat_wnv_mir_",data_year,suffix_for_plot,today,".pdf"), 
       width = 12, height = 10) 
   p_heat_wnv_rel
 dev.off()
 
 }
+dev.off()
 
 
 
