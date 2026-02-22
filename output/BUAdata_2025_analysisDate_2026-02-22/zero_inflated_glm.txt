@@ -1,0 +1,27 @@
+ Family: gaussian  ( identity )
+Formula:          A_obs ~ A_mod + site
+Zero inflation:         ~1
+Data: df_long
+
+      AIC       BIC    logLik -2*log(L)  df.resid 
+    728.4     752.9    -356.2     712.4       150 
+
+
+Dispersion estimate for gaussian family (sigma^2): 17.2 
+
+Conditional model:
+            Estimate Std. Error z value Pr(>|z|)    
+(Intercept)   3.2786     0.9140   3.587 0.000334 ***
+A_mod         0.5808     0.1280   4.537 5.71e-06 ***
+siteN        -2.4187     1.2064  -2.005 0.044962 *  
+siteRA       -0.3985     1.2565  -0.317 0.751117    
+siteRB        0.8496     1.7061   0.498 0.618506    
+siteS         0.9667     1.3362   0.723 0.469378    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Zero-inflation model:
+            Estimate Std. Error z value Pr(>|z|)  
+(Intercept)  -0.4105     0.1764  -2.327     0.02 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

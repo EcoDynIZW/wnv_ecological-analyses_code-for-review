@@ -126,6 +126,8 @@ df_long <- df_long[-a,] ##take out completely
 ```{r}
 unique(df_long$species_name_lat) ## number of species present
 
+tapply(df_long,c(species_name_lat,site) )
+
 cat("\n### Shapiro-Wilk-Test of differences (overall) ###\n")
 print(shapiro.test(df_long$diff))
 
@@ -161,10 +163,10 @@ dev.off()
 
 ## Zero-inflated glm
 ```{r}
-my_lm <- glmmTMB(A_obs_rd ~ A_mod_rd * site, data =df_long, ziformula = ~1 , family = "poisson")
+my_lm <- glmmTMB(A_obs ~ A_mod + site, data =df_long, ziformula = ~1 , family = "gaussian")
 summary(my_lm)
 
-sink(paste0(dir_output_path,"zero_inflated_glm.txt"))
+sink(paste0(dir_output_path,"/zero_inflated_glm.txt"))
 print(summary(my_lm))
 sink() 
 
@@ -179,8 +181,102 @@ testDispersion(simulationOutput)
 plot(simulationOutput)
 testZeroInflation(simulationOutput)
 
+
+## model plot ## TODO linewidth too faible
+p_lm <- plot_model(my_lm, type = "pred", terms = c("A_mod","site")) + 
+        scale_color_manual(values = site.cols) +
+        scale_fill_manual(values = site.cols) +
+
+        geom_abline(intercept = 0, slope= 1, 
+                    colour = "black", linewidth = 1, lty="dashed") +
+  
+        ## TODO does not work...
+        #geom_point(aes(x = df_long$A_mod, y = df_long$A_obs, color = df_long$site), 
+        #          size=2, alpha=0.5) + scale_color_manual(values = site.cols) +
+        xlab("modelled bird index") + 
+        ylab("observed bird index") +
+        xlim(0,16) + ylim(0,16) +
+       # title("") 
+        geom_text(aes(x = 7, y = 15,
+                   label = "model underprediction"),
+                   stat = "unique", family = "",
+                   size = 5, color = "grey66") +
+        geom_text(aes(x = 9, y = 2,
+                   label = "model overprediction"),
+                   stat = "unique", family = "",
+                   size = 5, color = "grey66")
+
+## save ----------
+
+pdf(file = paste0(dir_plot_path,"/Fig_SXb_zero_inflated_glm_",
+                  data_year,suffix_for_plot,today,".pdf"),
+                  width = 5, height = 5)
+    p_lm
+dev.off()
+
+
+
+## assess which bird species create the mismatch
+my_lmm <- lmer(diff ~  site + (1  | species_name_lat),
+              data = df_long)
+r2glmm::r2beta(my_lmm)
+lattice::dotplot(ranef(my_lmm))
+
+pdf(file = paste0(dir_plot_path,"/Fig_SXc_random_effects_lmm_",
+                  data_year,suffix_for_plot,today,".pdf"),
+                  width = 7, height = 7)
+    lattice::dotplot(ranef(my_lmm))
+dev.off()
+
+dev.off()
+
+
 ```
 
+## Data plot 
+```{r}
+
+
+df_wide <- df_long %>%
+  group_by(species_name_lat, site) %>%           # combine duplicates
+  summarise(
+    observed = mean(A_obs, na.rm = TRUE),
+    modelled = mean(A_mod, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_wider(
+    names_from = site,
+    values_from = c(observed, modelled),
+    names_glue = "{site}_{.value}",
+    values_fill = 0        # <-- fill NA values with 0
+  ) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2)))
+
+#View(df_wide)
+
+
+mat <- as.matrix(df_wide[,-1])     # all numeric columns
+rownames(mat) <- df_wide$species_name_lat   # keep species as row names
+
+pheatmap(mat,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         fontsize = 10)
+
+## save
+pdf(file = paste0(dir_plot_path,"/Fig_SXd_heatmap_",
+                  data_year,suffix_for_plot,today,".pdf"),
+                  width = 7, height = 10)
+  pheatmap(mat,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         fontsize = 10)
+    
+dev.off()
+
+dev.off()
+
+```
 
 
 <br><hr><br>
