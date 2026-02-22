@@ -65,7 +65,7 @@ dir_plot_path <- here('plots', paste0('BUAdata_',data_year,'_analysisDate_',toda
 ifelse(!dir.exists(file.path(dir_plot_path)), 
        dir.create(file.path(dir_plot_path)), FALSE)
 
-#theme_set(d6::theme_d6(base_size = 18)) ##TODO does not work, does not plot axes
+#theme_set(d6::theme_d6(base_size = 18,base_family = ""))) ##TODO does not work, does not plot axes
 theme_set(theme_bw(base_size = 18))
 
 site.cols  <- c("#90EE90", "#006400","#FF7F50","#6CA6CD","#CDCD00")
