@@ -247,8 +247,8 @@ df_wide <- df_long %>%
   pivot_wider(
     names_from = site,
     values_from = c(observed, modelled),
-    names_glue = "{site}_{.value}",
-    values_fill = 0        # <-- fill NA values with 0
+    names_glue = "{site}_{.value}" #,
+    #values_fill = 0        # <-- fill NA values with 0
   ) %>%
   mutate(across(where(is.numeric), ~ round(.x, 2)))
 
@@ -261,7 +261,8 @@ rownames(mat) <- df_wide$species_name_lat   # keep species as row names
 pheatmap(mat,
          cluster_rows = FALSE,
          cluster_cols = FALSE,
-         fontsize = 10)
+         fontsize = 10,
+         na_col = "grey")
 
 ## save
 pdf(file = paste0(dir_plot_path,"/Fig_SXd_heatmap_",
@@ -270,8 +271,9 @@ pdf(file = paste0(dir_plot_path,"/Fig_SXd_heatmap_",
   pheatmap(mat,
          cluster_rows = FALSE,
          cluster_cols = FALSE,
-         fontsize = 10)
-    
+         fontsize = 10,
+         na_col = "grey")
+   
 dev.off()
 
 dev.off()
