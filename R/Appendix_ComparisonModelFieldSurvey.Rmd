@@ -1,0 +1,196 @@
+---
+title: "compare survey data 2025 with planillo et al 2021 results"
+author:
+    - name: "Florian Ganz"
+      url: 
+      affiliation: Leibniz Institute for Zoo and Wildlife Research
+      affiliation_url: https://izw-berlin.de/en/
+      orcid_id: 
+    - name: "Stephanie Kramer-Schadt"
+      url: 
+      affiliation: Leibniz Institute for Zoo and Wildlife Research
+      affiliation_url: https://izw-berlin.de/en/
+date: "`r Sys.setlocale('LC_TIME','C'); paste('Last Update', format(Sys.time(), '%B %e, %Y')) `"
+output:
+  rmdformats::readthedown:
+    highlight: kate
+    code_folding: show
+    toc_depth: 4
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+params:
+  date: !r Sys.Date()
+---
+
+<style>
+h1 {
+  color: Orange ;
+}
+h2, h3, h4, h5, h6, legend {
+  color: Indigo ;
+}
+p {
+  line-height:170%;
+}
+{
+sidebar h2 {
+  background-color: Indigo;
+}
+code {
+  color: Indigo ;
+}
+.exercise {
+  color: #824b00;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
+                      dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1)
+Sys.setlocale("LC_TIME", "C")
+```
+
+
+# Model comparison
+
+## Settings
+
+Must be loaded before source file because of folder creation
+```{r}
+suffix_for_plot <-"_fieldSurvey_"
+data_year <- 2025
+```
+
+### Load libraries
+```{r}
+source(here::here('R','source-file-with-helper-functions.R'))
+
+## libraries outcommented are already in the source file
+#library(here)
+#library(tidyverse)
+library(ggpubr)
+library(broom)
+library(purrr)
+library(Metrics)
+library(pROC)
+#library(vegan)
+library(FD)
+library(kableExtra)
+library(webshot2)
+#library(pheatmap)
+#library(ggplot2)
+library(ggeffects)
+library(effects)
+#library(d6)
+library(extrafont)
+library(gridExtra)
+library(lme4)
+library(nlme)
+# font_import() ## do only once
+# font_import(pattern = "PTSans")
+# loadfonts(device = "win")
+
+library(glmmTMB)
+library(performance)
+library(r2glmm)
+library(DHARMa)
+library(sjPlot)
+library(sjmisc)
+
+```
+
+### Load data
+```{r}
+df_long <- read_csv(here("data", "comparison_abundance_survey_vs_planillo_et_al_2021.csv"))
+head(df_long)
+names(df_long)
+
+df_long$site <- as.factor(df_long$site)
+```
+
+
+## Data preparation
+Take out the flock of 115 Passer domesticus individuals at RB to avoid bias
+```{r}
+a <- which(df_long$A_obs > 100) ## swarm of 115 individuals
+df_long[a,]
+df_long <- df_long[-a,] ##take out completely
+```
+
+
+
+# Data analysis
+
+## Distribution of difference
+```{r}
+unique(df_long$species_name_lat) ## number of species present
+
+cat("\n### Shapiro-Wilk-Test of differences (overall) ###\n")
+print(shapiro.test(df_long$diff))
+
+summary(df_long$diff)
+
+
+p<-ggplot(df_long, aes(x=diff, color = site, fill = site)) + 
+   geom_histogram(binwidth= 1,  position="dodge", alpha=0.3) + 
+   scale_color_manual(values = site.cols) +
+   scale_fill_manual(values = site.cols)+
+   xlab("difference observed - modelled")
+   
+#color="black", fill="white",
+p
+
+## TODO the following saves the plot ugly; 
+#my_file <- paste0(dir_plot_path,"/histogram_difference_survey_model",suffix_for_plot,today,".pdf")
+#ggsave(my_file, 
+#       plot = p, 
+#       device = "pdf", 
+#       dpi = 320)
+
+## TODO alpha values not visible
+pdf(file = paste0(dir_plot_path,"/Fig_SXa_histogram_",
+                  data_year,suffix_for_plot,today,".pdf"),
+                  width = 5, height = 5)
+  p
+  
+dev.off()
+
+
+```
+
+## Zero-inflated glm
+```{r}
+my_lm <- glmmTMB(A_obs_rd ~ A_mod_rd * site, data =df_long, ziformula = ~1 , family = "poisson")
+summary(my_lm)
+
+sink(paste0(dir_output_path,"zero_inflated_glm.txt"))
+print(summary(my_lm))
+sink() 
+
+
+performance::r2(my_lm)
+
+
+## model diagnostics
+testDispersion(my_lm) ##overdispersion
+simulationOutput <- simulateResiduals(fittedModel = my_lm)
+testDispersion(simulationOutput)
+plot(simulationOutput)
+testZeroInflation(simulationOutput)
+
+```
+
+
+
+<br><hr><br>
+
+<details><summary>Session Info</summary>
+
+```{r sessionInfo}
+Sys.time()
+#git2r::repository() ## uncomment if you are using GitHub
+sessionInfo()
+```
+
+</details>
