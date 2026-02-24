@@ -9,7 +9,7 @@ output:
     toc_depth: 4
     toc_float: true
 editor_options:
-  chunk_output_type: console
+  chunk_output_type: inline
 params:
   date: !r Sys.Date()
 ---
@@ -198,12 +198,12 @@ write.csv(x = mosq_div0$AsyEst,
 
 
 #### Hill q = 0 ; richness/ diversity
-## TODO re-level legend to have RB RA S C N
-g0 <- ggiNEXT(mosq_div0, type=1, se=TRUE, facet.var="None",
-              color.var="Assemblage", 
+g0 <- ggiNEXT(mosq_div0, type=1, se=TRUE, 
+              color.var="Assemblage", facet.var="None",
               grey=FALSE) +
        scale_colour_manual(values = site.cols) +
        scale_fill_manual(values = site.cols) +
+       scale_shape_manual(values = c(15:18, 8)) +
        ylab('Diversity of mosquito species') + 
        xlab('Number of mosquitoes')
 g0
@@ -212,8 +212,6 @@ pdf(paste0(dir_plot_path,"/Fig_S1_rarefaction_mosq_q0_",data_year,suffix_for_plo
       width = 10, height = 10) 
   grid.arrange(g0, ncol=1)
 dev.off()
-
-
 ```
 
 
@@ -262,6 +260,9 @@ pdf(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q2_",data_year,suffix_for_plot,t
       width = 10, height = 10) 
   grid.arrange(g2, ncol=1)
 dev.off()
+
+ggsave(paste0(dir_plot_path,"/Fig_rarefaction_mosq_q2_",data_year,suffix_for_plot,today,"_ggsave.pdf"), 
+      width = 10, height = 10)
 ```
 
 
@@ -403,7 +404,7 @@ Check association of mosquitoes.
 
 ### Fig 5A Mosquito abuncance (log)
 
-```{r hc-mosq, warnings = FALSE}
+```{r hc-mosq, warnings = FALSE, fig.width=6, fig.height=10}
 my_a <- data.matrix(AB_mosq_beta)
 my_a
 
@@ -428,8 +429,10 @@ p_heat <- pheatmap(my_a_log, color=colors2, breaks=bk2, fontsize = 16) # logarit
 
 pdf(paste0(dir_plot_path,"/Fig_5A_heat_mosqAB_log_",data_year,suffix_for_plot,today,".pdf"), 
       width = 12, height = 10) 
-  p_heat
+  pheatmap(my_a_log, color=colors2, breaks=bk2, fontsize = 16)
 dev.off()
+
+pheatmap(my_a_log, color=colors2, breaks=bk2, fontsize = 16)
 ```
 
 ### Fig 5B Absolute values (wnv counts) of infected
