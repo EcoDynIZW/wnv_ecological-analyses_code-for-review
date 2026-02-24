@@ -46,8 +46,10 @@ code {
 </style>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
-                      dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1)
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE,
+  dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1
+)
 Sys.setlocale("LC_TIME", "C")
 ```
 
@@ -58,31 +60,31 @@ Sys.setlocale("LC_TIME", "C")
 
 Must be loaded before source file because of folder creation
 ```{r}
-suffix_for_plot <-"_fieldSurvey_"
+suffix_for_plot <- "_fieldSurvey_"
 data_year <- 2025
 ```
 
 ### Load libraries
 ```{r}
-source(here::here('R','source-file-with-helper-functions.R'))
+source(here::here("R", "source-file-with-helper-functions.R"))
 
 ## libraries outcommented are already in the source file
-#library(here)
-#library(tidyverse)
+# library(here)
+# library(tidyverse)
 library(ggpubr)
 library(broom)
 library(purrr)
 library(Metrics)
 library(pROC)
-#library(vegan)
+# library(vegan)
 library(FD)
 library(kableExtra)
 library(webshot2)
-#library(pheatmap)
-#library(ggplot2)
+# library(pheatmap)
+# library(ggplot2)
 library(ggeffects)
 library(effects)
-#library(d6)
+# library(d6)
 library(extrafont)
 library(gridExtra)
 library(lme4)
@@ -97,7 +99,6 @@ library(r2glmm)
 library(DHARMa)
 library(sjPlot)
 library(sjmisc)
-
 ```
 
 ### Load data
@@ -114,8 +115,8 @@ df_long$site <- as.factor(df_long$site)
 Take out the flock of 115 Passer domesticus individuals at RB to avoid bias
 ```{r}
 a <- which(df_long$A_obs > 100) ## swarm of 115 individuals
-df_long[a,]
-df_long <- df_long[-a,] ##take out completely
+df_long[a, ]
+df_long <- df_long[-a, ] ## take out completely
 ```
 
 
@@ -126,7 +127,7 @@ df_long <- df_long[-a,] ##take out completely
 ```{r}
 unique(df_long$species_name_lat) ## number of species present
 
-tapply(df_long,c(species_name_lat,site) )
+tapply(df_long, c(species_name_lat, site))
 
 cat("\n### Shapiro-Wilk-Test of differences (overall) ###\n")
 print(shapiro.test(df_long$diff))
@@ -134,48 +135,50 @@ print(shapiro.test(df_long$diff))
 summary(df_long$diff)
 
 
-p<-ggplot(df_long, aes(x=diff, color = site, fill = site)) + 
-   geom_histogram(binwidth= 1,  position="dodge", alpha=0.3) + 
-   scale_color_manual(values = site.cols) +
-   scale_fill_manual(values = site.cols)+
-   xlab("difference observed - modelled")
-   
-#color="black", fill="white",
+p <- ggplot(df_long, aes(x = diff, color = site, fill = site)) +
+  geom_histogram(binwidth = 1, position = "dodge", alpha = 0.3) +
+  scale_color_manual(values = site.cols) +
+  scale_fill_manual(values = site.cols) +
+  xlab("difference observed - modelled")
+
+# color="black", fill="white",
 p
 
-## TODO the following saves the plot ugly; 
-#my_file <- paste0(dir_plot_path,"/histogram_difference_survey_model",suffix_for_plot,today,".pdf")
-#ggsave(my_file, 
-#       plot = p, 
-#       device = "pdf", 
+## TODO the following saves the plot ugly;
+# my_file <- paste0(dir_plot_path,"/histogram_difference_survey_model",suffix_for_plot,today,".pdf")
+# ggsave(my_file,
+#       plot = p,
+#       device = "pdf",
 #       dpi = 320)
 
 ## TODO alpha values not visible
-pdf(file = paste0(dir_plot_path,"/Fig_SXa_histogram_",
-                  data_year,suffix_for_plot,today,".pdf"),
-                  width = 5, height = 5)
-  p
-  
+pdf(
+  file = paste0(
+    dir_plot_path, "/Fig_SXa_histogram_",
+    data_year, suffix_for_plot, today, ".pdf"
+  ),
+  width = 5, height = 5
+)
+p
+
 dev.off()
-
-
 ```
 
 ## Zero-inflated glm
 ```{r}
-my_lm <- glmmTMB(A_obs ~ A_mod + site, data =df_long, ziformula = ~1 , family = "gaussian")
+my_lm <- glmmTMB(A_obs ~ A_mod + site, data = df_long, ziformula = ~1, family = "gaussian")
 summary(my_lm)
 
-sink(paste0(dir_output_path,"/zero_inflated_glm.txt"))
+sink(paste0(dir_output_path, "/zero_inflated_glm.txt"))
 print(summary(my_lm))
-sink() 
+sink()
 
 
 performance::r2(my_lm)
 
 
 ## model diagnostics
-testDispersion(my_lm) ##overdispersion
+testDispersion(my_lm) ## overdispersion
 simulationOutput <- simulateResiduals(fittedModel = my_lm)
 testDispersion(simulationOutput)
 plot(simulationOutput)
@@ -183,87 +186,111 @@ testZeroInflation(simulationOutput)
 
 
 ## model plot ## TODO linewidth too faible
-p_lm <- plot_model(my_lm, type = "pred", terms = c("A_mod","site")) + 
-        scale_color_manual(values = site.cols) +
-        scale_fill_manual(values = site.cols) +
+p_lm <- plot_model(my_lm, type = "pred", terms = c("A_mod", "site")) +
+  scale_color_manual(values = site.cols) +
+  scale_fill_manual(values = site.cols) +
 
-        geom_abline(intercept = 0, slope= 1, 
-                    colour = "black", linewidth = 1, lty="dashed") +
-  
-        ## TODO does not work...
-        #geom_point(aes(x = df_long$A_mod, y = df_long$A_obs, color = df_long$site), 
-        #          size=2, alpha=0.5) + scale_color_manual(values = site.cols) +
-        xlab("modelled bird index") + 
-        ylab("observed bird index") +
-        xlim(0,16) + ylim(0,16) +
-       # title("") 
-        geom_text(aes(x = 7, y = 15,
-                   label = "model underprediction"),
-                   stat = "unique", family = "",
-                   size = 5, color = "grey66") +
-        geom_text(aes(x = 9, y = 2,
-                   label = "model overprediction"),
-                   stat = "unique", family = "",
-                   size = 5, color = "grey66")
+  geom_abline(
+    intercept = 0, slope = 1,
+    colour = "black", linewidth = 1, lty = "dashed"
+  ) +
+
+  ## TODO does not work...
+  # geom_point(aes(x = df_long$A_mod, y = df_long$A_obs, color = df_long$site),
+  #          size=2, alpha=0.5) + scale_color_manual(values = site.cols) +
+  xlab("modelled bird index") +
+  ylab("observed bird index") +
+  xlim(0, 16) + ylim(0, 16) +
+  # title("")
+  geom_text(
+    aes(
+      x = 7, y = 15,
+      label = "model underprediction"
+    ),
+    stat = "unique", family = "",
+    size = 5, color = "grey66"
+  ) +
+  geom_text(
+    aes(
+      x = 9, y = 2,
+      label = "model overprediction"
+    ),
+    stat = "unique", family = "",
+    size = 5, color = "grey66"
+  )
 p_lm
 
 ## alternative plot, not based on zero-inflation
 p_lm2 <- ggplot(df_long) +
-  aes(x = A_mod, y = A_obs, color = site, fill =site) +
-  geom_point(size=3, alpha=0.5) + 
-             scale_color_manual(values = site.cols) +
-  geom_smooth(method = "lm",alpha=0.2, linewidth = 2) + 
-             scale_fill_manual(values = site.cols) +
-  geom_abline(intercept = 0, slope= 1, colour = "black", linewidth = 1, lty="dashed") +
-  xlab("modelled bird abundance") + 
+  aes(x = A_mod, y = A_obs, color = site, fill = site) +
+  geom_point(size = 3, alpha = 0.5) +
+  scale_color_manual(values = site.cols) +
+  geom_smooth(method = "lm", alpha = 0.2, linewidth = 2) +
+  scale_fill_manual(values = site.cols) +
+  geom_abline(intercept = 0, slope = 1, colour = "black", linewidth = 1, lty = "dashed") +
+  xlab("modelled bird abundance") +
   ylab("observed bird abundance") +
-  xlim(0,16) + ylim(0,23) +
-  geom_text(aes(x = 7, y = 21,
-                   label = "model underprediction"),
-                   stat = "unique", family = "",
-                   size = 5, color = "grey66")
+  xlim(0, 16) +
+  ylim(0, 23) +
+  geom_text(
+    aes(
+      x = 7, y = 21,
+      label = "model underprediction"
+    ),
+    stat = "unique", family = "",
+    size = 5, color = "grey66"
+  )
 
 p_lm2
 
 ## save ----------
 
-pdf(file = paste0(dir_plot_path,"/Fig_SXb_zero_inflated_glm_",
-                  data_year,suffix_for_plot,today,".pdf"),
-                  width = 5, height = 5)
-    p_lm
+pdf(
+  file = paste0(
+    dir_plot_path, "/Fig_SXb_zero_inflated_glm_",
+    data_year, suffix_for_plot, today, ".pdf"
+  ),
+  width = 5, height = 5
+)
+p_lm
 dev.off()
 
 
-pdf(file = paste0(dir_plot_path,"/Fig_SXb2_ggplot2_lm_",
-                  data_year,suffix_for_plot,today,".pdf"),
-                  width = 5, height = 5)
-    p_lm2
+pdf(
+  file = paste0(
+    dir_plot_path, "/Fig_SXb2_ggplot2_lm_",
+    data_year, suffix_for_plot, today, ".pdf"
+  ),
+  width = 5, height = 5
+)
+p_lm2
 dev.off()
 
 
 ## assess which bird species create the mismatch
-my_lmm <- lmer(diff ~  site + (1  | species_name_lat),
-              data = df_long)
+my_lmm <- lmer(diff ~ site + (1 | species_name_lat),
+  data = df_long
+)
 r2glmm::r2beta(my_lmm)
 lattice::dotplot(ranef(my_lmm))
 
-pdf(file = paste0(dir_plot_path,"/Fig_SXc_random_effects_lmm_",
-                  data_year,suffix_for_plot,today,".pdf"),
-                  width = 7, height = 7)
-    lattice::dotplot(ranef(my_lmm))
+pdf(
+  file = paste0(
+    dir_plot_path, "/Fig_SXc_random_effects_lmm_",
+    data_year, suffix_for_plot, today, ".pdf"
+  ),
+  width = 7, height = 7
+)
+lattice::dotplot(ranef(my_lmm))
 dev.off()
 
 dev.off()
-
-
 ```
 
 ## Data plot 
 ```{r}
-
-
 df_wide <- df_long %>%
-  group_by(species_name_lat, site) %>%           # combine duplicates
+  group_by(species_name_lat, site) %>% # combine duplicates
   summarise(
     observed = mean(A_obs, na.rm = TRUE),
     modelled = mean(A_mod, na.rm = TRUE),
@@ -272,37 +299,42 @@ df_wide <- df_long %>%
   pivot_wider(
     names_from = site,
     values_from = c(observed, modelled),
-    names_glue = "{site}_{.value}" #,
-    #values_fill = 0        # <-- fill NA values with 0
+    names_glue = "{site}_{.value}" # ,
+    # values_fill = 0        # <-- fill NA values with 0
   ) %>%
   mutate(across(where(is.numeric), ~ round(.x, 2)))
 
-#View(df_wide)
+# View(df_wide)
 
 
-mat <- as.matrix(df_wide[,-1])     # all numeric columns
-rownames(mat) <- df_wide$species_name_lat   # keep species as row names
+mat <- as.matrix(df_wide[, -1]) # all numeric columns
+rownames(mat) <- df_wide$species_name_lat # keep species as row names
 
 pheatmap(mat,
-         cluster_rows = FALSE,
-         cluster_cols = FALSE,
-         fontsize = 10,
-         na_col = "grey")
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  fontsize = 10,
+  na_col = "grey"
+)
 
 ## save
-pdf(file = paste0(dir_plot_path,"/Fig_SXd_heatmap_",
-                  data_year,suffix_for_plot,today,".pdf"),
-                  width = 7, height = 10)
-  pheatmap(mat,
-         cluster_rows = FALSE,
-         cluster_cols = FALSE,
-         fontsize = 10,
-         na_col = "grey")
-   
-dev.off()
+pdf(
+  file = paste0(
+    dir_plot_path, "/Fig_SXd_heatmap_",
+    data_year, suffix_for_plot, today, ".pdf"
+  ),
+  width = 7, height = 10
+)
+pheatmap(mat,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  fontsize = 10,
+  na_col = "grey"
+)
 
 dev.off()
 
+dev.off()
 ```
 
 
@@ -312,7 +344,7 @@ dev.off()
 
 ```{r sessionInfo}
 Sys.time()
-#git2r::repository() ## uncomment if you are using GitHub
+# git2r::repository() ## uncomment if you are using GitHub
 sessionInfo()
 ```
 

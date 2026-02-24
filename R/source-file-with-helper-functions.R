@@ -46,6 +46,8 @@ library(ggcorrplot)
 library("factoextra")
 
 library(knitr)
+library(janitor)
+library(scico)
 
 ################################################################################
 ## ---------------------------- Settings -------------------------------------##
@@ -68,19 +70,27 @@ ifelse(!dir.exists(file.path(dir_plot_path)),
   dir.create(file.path(dir_plot_path)), FALSE
 )
 
-# theme_set(d6::theme_d6(base_size = 18,base_family = ""))) ## TODO does not work, does not plot axes
+# theme_set(d6::theme_d6(base_size = 18,base_family = ""))) ## TODO d6:: font issues
 theme_set(theme_bw(base_size = 18))
 
-site.cols <- c("C" = "#90EE90", "N" = "#006400", "RA" = "#FF7F50", "RB" = "#6CA6CD", "S" = "#CDCD00")
-site.cols.ordered <- c("#FF7F50", "#6CA6CD", "#CDCD00", "#90EE90", "#006400")
-site.order <- c("RB", "RA", "S", "C", "N")
+site.cols <- c(
+  "C" = "#90EE90",
+  "N" = "#006400",
+  "RA" = "#FF7F50",
+  "RB" = "#6CA6CD",
+  "S" = "#CDCD00"
+)
+
+## does not function in derivate functions like iNEXT
+# site.cols.ordered <- c("#FF7F50", "#6CA6CD", "#CDCD00", "#90EE90", "#006400")
+# site.order <- c("RB", "RA", "S", "C", "N")
 
 
-### --------------------------------------------------------------------###
-### --------------------------LOAD DATA---------------------------------###
-### --------------------------------------------------------------------###
+### ----------------------------------     ----------------------------------###
+### --------------------------  LOAD DATA   ---------------------------------###
+### --------------------------------     ------------------------------------###
 
-### ----------------- ----      2023      ------------------------------ ###
+### ----------------- ----      2023          ------------------------------ ###
 
 if (data_year == 2023) {
   mymosq <- read.table(here("data", "2023_data_mosquitoes_20240313.csv"),
@@ -96,7 +106,7 @@ if (data_year == 2023) {
   )
 } else
 
-## ------------------------   2024      ------------------------------- ###
+## ------------------------   2024           ------------------------------- ###
 if (data_year == 2024) {
   mymosq <- read.table(here("data", "2024_data_mosquitoes_20260109.csv"),
     sep = "\t", quote = "\"'", dec = ".", header = TRUE
@@ -110,7 +120,7 @@ if (data_year == 2024) {
     sep = ";", quote = "\"'", dec = ",", header = TRUE
   )
 } else {
-  ## ------------------------   2023 and 2024      ----------------------###
+  ## ------------------------   2023 and 2024          ----------------------###
 
   mymosq <- read.table(
     here(
@@ -129,7 +139,7 @@ if (data_year == 2024) {
   )
 }
 
-### --------- relative to loaded year take environmental variables ------###
+### --------- relative to loaded year take environmental variables ---    ---###
 myenv <- myenvblood[, c(1:18)]
 
 
