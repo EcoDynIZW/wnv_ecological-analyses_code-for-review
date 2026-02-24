@@ -77,7 +77,6 @@ data_normalized <- scale(num_df)
 
 ## remove birds with zero variance
 data_normalized <- data_normalized[, !colSums(is.na(data_normalized))]
-
 ```
 
 
@@ -161,18 +160,22 @@ p$layers[[2]]$aes_params$size <- 5
 
 p
 
-ggsave(paste0(dir_plot_path, "/Fig_7_pca_blood_envcom_wSites_", 
-              data_year, suffix_for_plot, today, ".pdf"),
-    width = 12, height = 8, plot = p)
+ggsave(
+  paste0(
+    dir_plot_path, "/Fig_7_pca_blood_envcom_wSites_",
+    data_year, suffix_for_plot, today, ".pdf"
+  ),
+  width = 12, height = 8, plot = p
+)
 
 
 ## save
-#pdf(
+# pdf(
 #  file = paste0(dir_plot_path, "/Fig_7_pca_envcom_wSites_", data_year, suffix_for_plot, today, ".pdf"),
 #  width = 12, height = 8
-#)
-#p
-#dev.off()
+# )
+# p
+# dev.off()
 ```
 
 

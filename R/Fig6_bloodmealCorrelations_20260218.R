@@ -1,66 +1,23 @@
----
-title: "WNS bloodmeals in mosquitoes in Berlin 2023 and 2024"
-author: "Steph Kramer kramer@izw-berlin.de"
-date: "`r Sys.setlocale('LC_TIME','C'); paste('Last Update', format(Sys.time(), '%B %e, %Y')) `"
-output:
-  rmdformats::readthedown:
-    highlight: kate
-    code_folding: show
-    toc_depth: 4
-    toc_float: true
-editor_options:
-  chunk_output_type: console
-params:
-  date: !r Sys.Date()
----
+params <-
+list(date = structure(20508, class = "Date"))
 
-<style>
-h1 {
-  color: Orange ;
-}
-h2, h3, h4, h5, h6, legend {
-  color: Indigo ;
-}
-p {
-  line-height:170%;
-}
-{
-sidebar h2 {
-  background-color: Indigo;
-}
-code {
-  color: Indigo ;
-}
-.exercise {
-  color: #824b00;
-}
-</style>
-
-```{r setup, include=FALSE}
+## ----setup, include=FALSE-----------------------------------------------------------------------------------------------------
 knitr::opts_chunk$set(
   echo = TRUE, message = FALSE, warning = FALSE,
   dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1
 )
 Sys.setlocale("LC_TIME", "C")
-```
 
 
-# Bloodmeal correlations
-
-## Settings
-
-```{r}
+## -----------------------------------------------------------------------------------------------------------------------------
 if (FLAG_run == 0) {
   data_year <- 2024 ## set at the beginning - set to 9999 if data_years are combined
   source(here::here("R", "source-file-with-helper-functions.R"))
 }
 suffix_for_plot <- "_bloodmeal_"
-```
 
 
-## Run correlation
-
-```{r}
+## -----------------------------------------------------------------------------------------------------------------------------
 str(myenvblood)
 num_df <- myenvblood[, -1] ## delete the non-numeric site variable
 num_df <- janitor::clean_names(num_df)
@@ -103,7 +60,7 @@ ggsave(
     dir_plot_path, "/Fig_6_corr_envs_kendall_",
     data_year, suffix_for_plot, today, ".pdf"
   ),
-  width = 14, height = 12, plot = cor_p_custom
+  width = 12, height = 10, plot = cor_p_custom
 )
 
 
@@ -116,17 +73,10 @@ ggsave(
 # )
 # cor_p_custom
 # dev.off()
-```
 
 
-<br><hr><br>
-
-<details><summary>Session Info</summary>
-
-```{r sessionInfo}
+## ----sessionInfo--------------------------------------------------------------------------------------------------------------
 Sys.time()
 # git2r::repository() ## uncomment if you are using GitHub
 sessionInfo()
-```
 
-</details>

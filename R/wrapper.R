@@ -50,4 +50,4 @@ if (FLAG_run == 1) {
   }
   print("done")
 }
-dev.off()
+# dev.off()
