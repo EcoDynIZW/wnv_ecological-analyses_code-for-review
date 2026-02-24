@@ -112,25 +112,15 @@ data_normalized <- scale(subset_for_analysis)
 
 #head(data_normalized)
 
-## TODO - there is a way to find out the colname without typing the birds name
-a <- which(is.na(data_normalized)) ## same amount of birds present, variance is 0
-
-if (length(a) > 0){
-  col_pos <- which(colnames(data_normalized) == "Phoenicurus_phoenicurus") ## TODO not nice!
- # col_pos1 <- which(colnames(data_normalized) == "Muscicapa_striata") ## TODO not nice!
- # col_pos2 <- which(colnames(data_normalized) == "Passer_montanus") ## TODO not nice!
- # col_pos3 <- which(colnames(data_normalized) == "Sylvia_curruca") ## TODO not nice!
- # data_normalized_b <- data_normalized[,-c(col_pos, col_pos1, col_pos2, col_pos3)]
-  data_normalized_b <- data_normalized[,-c(col_pos)]
-  data_normalized <- data_normalized_b
-}
-
-
+## remove birds with zero variance
+data_normalized <- data_normalized[, !colSums(is.na(data_normalized))]
 
 ## based on scaled data
 data.pca <- prcomp(data_normalized, center = TRUE, scale. = TRUE)
 
 summary(data.pca)
+
+rownames(data.pca$rotation) <- gsub("_", " ", rownames(data.pca$rotation))
 
 # Compute eigenvalues
 eigenvalues <- (data.pca$sdev)^2
@@ -179,18 +169,24 @@ com$site       ## "C"  "N"  "RA" "RB" "S"
 
   p <- fviz_pca_biplot(data.pca, 
                 repel = TRUE,  
-                col.var = "cos2", gradient.cols = c("grey", "blue", "red"),  ## arrows
-                col.ind = "orange" , 
-                pointshape = 19, pointsize = 7, alpha.ind=0.8,
-               # addEllipses = TRUE, label = "var", mean.point = FALSE,
-               # ellipse.type = 'confidence', ellipse.level=0.7,
-                legend.title = "cos2" ) 
+                col.var = "cos2", 
+                gradient.cols = scico::scico(100, palette = "acton", direction = -1, end = .9),
+                pointshape = 19, pointsize = 7, alpha.ind = 0.8,
+                legend.title = "cos2" ) +
+    theme(panel.grid.minor = element_blank())
   
   
-  p$layers[[1]]$data$name <- factor(com$site)
-  p$layers[[1]]$mapping <- aes(x, y, colour = site.cols, shape = name) ##TODO why doesn't it take the names???
-  p$layers[[1]]$aes_params$size <- 5
-  p <- p + labs(shape = 'site')
+  ## use site labels not numbers
+  p$layers[[2]]$data$name <- factor(com$site)
+  ## force custom site colors for points and labels
+  p$layers[[1]]$mapping <- aes(x, y, colour = site.cols)
+  p$layers[[2]]$mapping <- aes(x, y, label = name, colour = site.cols) 
+  p$layers[[1]]$aes_params$colour <- site.cols
+  p$layers[[2]]$aes_params$colour <- colorspace::darken(site.cols, .45)
+  ## bold and larger text
+  p$layers[[2]]$aes_params$fontface <- "bold"
+  p$layers[[2]]$aes_params$size <- 5
+  
   p
 
 
@@ -199,11 +195,6 @@ pdf(file = paste0(dir_plot_path,"/Fig_7_pca_envcom_wSites_",data_year,suffix_for
                   width = 12, height = 8)
   p
 dev.off()
-
-## TODO how can I add my colour to the sites?
-  #  scale_fill_manual(values = site.col)
-# scale_colour_manual(values = site.col)
-
 ```
 
 
@@ -283,64 +274,6 @@ results <- data.frame(
 print(results)
 
 ```
-
-## PCA plot bloodmeal
-### Fig 7 bloodmeal 
-```{r}
-## Biplot using factoextra
-## ind is related to the rows, 
-## and the numbering is according to rownames
-rownames(df_sorted)  ##  "1" "2" "3" "4" "5"
-df_sorted$site       ## "C"  "N"  "RA" "RB" "S" 
-
-
-
-
-  p <- fviz_pca_biplot(data.pca, 
-                repel = TRUE,  
-                col.var = "cos2", gradient.cols = c("grey", "blue", "red"),  ## arrows
-                col.ind = "orange" , 
-                pointshape = 19, pointsize = 7, alpha.ind=0.8,
-               # addEllipses = TRUE, label = "var", mean.point = FALSE,
-               # ellipse.type = 'confidence', ellipse.level=0.7,
-                legend.title = "cos2" ) + #scale_color_manual(values = site.cols)
-  
-  
-  p$layers[[1]]$data$name <- factor(df_sorted$site)
-  p$layers[[1]]$mapping <- aes(x, y, colour = site.cols, shape = name) ##TODO why doesn't it take the names???
-  p$layers[[1]]$aes_params$size <- 5
-  p <- p + labs(shape = 'site')
-  p
-
-
-## save
-pdf(file = paste0(dir_plot_path,"/Fig_7_pca_bloodmeal_wSites_",data_year,suffix_for_plot,today,".pdf"),
-                  width = 12, height = 8)
-  p
-dev.off()
-
-## TODO how can I add my colour to the sites?
-  #  scale_fill_manual(values = site.col)
-# scale_colour_manual(values = site.col)
-
-```
-
-
-### Fig S2 bloodmeal
-
-```{r}
-fviz_cos2(data.pca, choice = "var", axes = 1:2)
-
-## save plots
-pdf(file = paste0(dir_plot_path,"/Fig_S2_pca_bloodmeal_cos2_",data_year,suffix_for_plot,today,".pdf"),
-                  width = 12, height = 8)
-  fviz_cos2(data.pca, choice = "var", axes = 1:2)
-dev.off()
-
-```
-
-
-
 
 <br><hr><br>
 
