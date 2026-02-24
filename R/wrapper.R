@@ -29,7 +29,7 @@ knitr::knit(here::here("R", "Fig7_S2_PCA_20260218.Rmd"),
 )
 
 knitr::knit(here::here("R", "Fig7_S2_PCA_bloodmeal_20260224.Rmd"),
-  here::here("R", "Fig7_S2_PCA_bloodmeal_20260223.R"),
+  here::here("R", "Fig7_S2_PCA_bloodmeal_20260224.R"),
   tangle = TRUE
 )
 
