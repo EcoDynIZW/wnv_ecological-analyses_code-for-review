@@ -228,12 +228,12 @@ ggsave(
 
 
 ## save plots
-#pdf(
+# pdf(
 #  file = paste0(dir_plot_path, "/Fig_S2_pca_envcom_cos2_", data_year, suffix_for_plot, today, ".pdf"),
 #  width = 12, height = 8
-#)
-#fviz_cos2(data.pca, choice = "var", axes = 1:2)
-#dev.off()
+# )
+# fviz_cos2(data.pca, choice = "var", axes = 1:2)
+# dev.off()
 ```
 
 

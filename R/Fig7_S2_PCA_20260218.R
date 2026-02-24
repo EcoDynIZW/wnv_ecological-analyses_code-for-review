@@ -1,88 +1,70 @@
----
-title: "PCA for WNS in mosquitoes in Berlin 2023 and 2024"
-author: "Steph Kramer kramer@izw-berlin.de"
-date: "`r Sys.setlocale('LC_TIME','C'); 
-        paste('Last Update', format(Sys.time(), '%B %e, %Y')) `"
-output:
-  rmdformats::readthedown:
-    highlight: kate
-    code_folding: show
-    toc_depth: 4
-    toc_float: true
-editor_options:
-  chunk_output_type: console
-params:
-  date: !r Sys.Date()
----
+params <-
+list(date = structure(20508, class = "Date"))
 
-<style>
-h1 {
-  color: Orange ;
-}
-h2, h3, h4, h5, h6, legend {
-  color: Indigo ;
-}
-p {
-  line-height:170%;
-}
-{
-sidebar h2 {
-  background-color: Indigo;
-}
-code {
-  color: Indigo ;
-}
-.exercise {
-  color: #824b00;
-}
-</style>
-
-```{r setup, include=FALSE}
+## ----setup, include=FALSE-----------------------------------------------------------------------------------------------------
 knitr::opts_chunk$set(
   echo = TRUE, message = FALSE, warning = FALSE,
   dev = "ragg_png", fig.width = 9, fig.height = 6, dpi = 600, retina = 1
 )
 Sys.setlocale("LC_TIME", "C")
-```
 
 
-# PCA on bloodmeals
-
-
-```{r}
+## -----------------------------------------------------------------------------------------------------------------------------
 if (FLAG_run == 0) {
   data_year <- 2024 ## set at the beginning - set to 9999 if data_years are combined
   source(here::here("R", "source-file-with-helper-functions.R"))
 }
 
 suffix_for_plot <- "_PCA_"
-```
 
 
-## Load data
-
-```{r}
-str(myenvblood)
-myenvblood$site
-
-## resort based on alphabetical order to keep it the same order !!!! super important
-df_sorted <- myenvblood[order(myenvblood$site), ]
-rownames(df_sorted) <- c(1:5)
-rownames(df_sorted)
+## -----------------------------------------------------------------------------------------------------------------------------
+str(myenv)
+str(ab_aves)
 
 
-num_df <- df_sorted[, -1] ## delete the non-numeric site variable
-data_normalized <- scale(num_df)
+## -----------------------------------------------------------------------------------------------------------------------------
+#### env vars and aves spec across locations
 
+names(ab_aves) ## 66 bird species - focus on the abundant ones - if at least 1 bird present
+ab_aves$site ## take care - different sequence now, not sorted alphabetically
+# ab_aves_floor <- floor(ab_aves[c(2:dim(ab_aves)[2])]) ## reduces 33
+ab_aves_floor <- round(ab_aves[c(2:dim(ab_aves)[2])], digits = 0) ## reduces 24
+
+
+aves_to_remove <- which(colSums(ab_aves_floor) == 0)
+length(aves_to_remove) # remove 33 of 66
+names(aves_to_remove)
+
+master_aves_red <- ab_aves_floor[, -which(names(ab_aves_floor) %in% names(aves_to_remove))]
+master_aves <- cbind(ab_aves$site, master_aves_red)
+head(master_aves)
+names(master_aves)[1] <- "site"
+
+ft <- flextable(master_aves)
+save_as_docx(ft, path = paste0(
+  dir_output_path,
+  "/ft_aves_spec_per_location_modelled_reduced", suffix_for_plot, today, ".docx"
+))
+
+
+## -----------------------------------------------------------------------------------------------------------------------------
+com <- merge(myenv, master_aves, by = "site") ## merge! by site
+
+
+## -----------------------------------------------------------------------------------------------------------------------------
+com
+## in case there are factors/characters in the data
+# which(names(com) == 'site')
+
+subset_for_analysis <- com[, -1]
+data_normalized <- scale(subset_for_analysis)
+
+# head(data_normalized)
 
 ## remove birds with zero variance
 data_normalized <- data_normalized[, !colSums(is.na(data_normalized))]
-```
 
-
-
-## Run PCA 
-```{r}
 ## based on scaled data
 data.pca <- prcomp(data_normalized, center = TRUE, scale. = TRUE)
 
@@ -126,11 +108,9 @@ results <- data.frame(
   Cumulative_Variance = cumulative_variance
 )
 print(results)
-```
 
-## PCA plot
-### Fig 7 
-```{r}
+
+## -----------------------------------------------------------------------------------------------------------------------------
 ## Biplot using factoextra
 ## ind is related to the rows,
 ## and the numbering is according to rownames
@@ -162,7 +142,7 @@ p
 
 ggsave(
   paste0(
-    dir_plot_path, "/Fig_7_pca_blood_envcom_wSites_",
+    dir_plot_path, "/Fig_7_pca_envcom_wSites_",
     data_year, suffix_for_plot, today, ".pdf"
   ),
   width = 12, height = 8, plot = p
@@ -176,45 +156,32 @@ ggsave(
 # )
 # p
 # dev.off()
-```
 
 
-### Fig S2
-
-```{r}
+## -----------------------------------------------------------------------------------------------------------------------------
 cos_p <- fviz_cos2(data.pca, choice = "var", axes = 1:2)
 cos_p
 
 ggsave(
   paste0(
-    dir_plot_path, "/Fig_S2_pca_blood_envcom_cos2_",
+    dir_plot_path, "/Fig_S2_pca_envcom_cos2_",
     data_year, suffix_for_plot, today, ".pdf"
   ),
   width = 12, height = 8, plot = cos_p
 )
 
+
 ## save plots
 # pdf(
-#  file = paste0(dir_plot_path, "/Fig_S2_pca_blood_envcom_cos2_", data_year, suffix_for_plot, today, ".pdf"),
+#  file = paste0(dir_plot_path, "/Fig_S2_pca_envcom_cos2_", data_year, suffix_for_plot, today, ".pdf"),
 #  width = 12, height = 8
 # )
 # fviz_cos2(data.pca, choice = "var", axes = 1:2)
 # dev.off()
-```
 
 
-
-<br><hr><br>
-
-<details><summary>Session Info</summary>
-
-```{r sessionInfo}
+## ----sessionInfo--------------------------------------------------------------------------------------------------------------
 Sys.time()
 # git2r::repository() ## uncomment if you are using GitHub
 sessionInfo()
-```
-
-</details>
-
-
 
